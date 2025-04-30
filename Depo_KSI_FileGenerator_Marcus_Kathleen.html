@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DEPO & KSI ORDERING FILE GENERATOR</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- SheetJS for Excel export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    td[contenteditable="true"] { background-color: #fffbe6; }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-900 p-6">
+  <div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
+    <h1 class="text-2xl font-bold mb-4 text-center">DEPO & KSI ORDERING FILE GENERATOR</h1>
+    <div class="mb-4">
+      <label class="block font-medium mb-2">Select CSV/TSV Files:</label>
+      <input id="fileInput" type="file" multiple accept=".csv,.tsv" />
+    </div>
+    <div id="toggleControls" class="mb-4 hidden">
+      <p class="font-medium mb-2">Toggle Columns:</p>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 text-sm"></div>
+    </div>
+    <div id="preview" class="overflow-x-auto bg-white p-3 rounded shadow-inner">
+      <p class="text-gray-500">No data loaded.</p>
+    </div>
+    <div class="mt-4">
+      <button id="downloadBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Download Files</button>
+    </div>
+  </div>
+
+  <script>
+    if (typeof XLSX === 'undefined') console.error('XLSX library failed to load.');
+
+    const defaultVisible = ['PO Number', 'SKU1', 'Qty'];
+    let headers = [], filesData = [], visibleColumns = new Set();
+
+    function cleanCell(cell) {
+      let c = cell.trim();
+      if (c.startsWith('"') && c.endsWith('"')) c = c.slice(1, -1);
+      return c.replace(/^KSI-/i, '');
+    }
+
+    document.getElementById('fileInput').addEventListener('change', handleFiles);
+    document.getElementById('downloadBtn').addEventListener('click', exportFiles);
+
+    function handleFiles(e) {
+      const files = Array.from(e.target.files);
+      Promise.all(files.map(file => new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const rawLines = reader.result.split(/\r?\n/).filter(l => l.trim() !== '');
+          const rows = rawLines.map(line =>
+            (line.includes('\t') ? line.split('\t') : line.split(',')).map(cleanCell)
+          );
+          res({ name: file.name, rows });
+        };
+        reader.onerror = () => rej(reader.error);
+        reader.readAsText(file);
+      }))).then(results => {
+        headers = results[0].rows[0] || [];
+        filesData = results.map(f => ({ name: f.name, rows: f.rows.slice(1) }));
+        visibleColumns = new Set(headers.filter(h => defaultVisible.includes(h)));
+        renderToggles();
+        renderPreview();
+      }).catch(err => alert('Error reading files: ' + err));
+    }
+
+    function renderToggles() {
+      const container = document.getElementById('toggleControls');
+      const grid = container.querySelector('div');
+      grid.innerHTML = '';
+      headers.forEach(h => {
+        const label = document.createElement('label');
+        label.className = 'flex items-center gap-2 p-1 border rounded hover:bg-gray-50';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = visibleColumns.has(h);
+        cb.addEventListener('change', () => {
+          cb.checked ? visibleColumns.add(h) : visibleColumns.delete(h);
+          renderPreview();
+        });
+        label.append(cb, document.createTextNode(h));
+        grid.appendChild(label);
+      });
+      container.classList.remove('hidden');
+    }
+
+    function renderPreview() {
+      const preview = document.getElementById('preview');
+      const allRows = filesData.flatMap(f => f.rows);
+      if (!headers.length || !allRows.length) {
+        preview.innerHTML = '<p class="text-gray-500">No data to preview.</p>';
+        return;
+      }
+      let html = '<table class="min-w-full border-collapse text-sm"><thead><tr>';
+      headers.forEach(h => {
+        if (visibleColumns.has(h)) html += `<th class="border px-2 py-1 bg-gray-200">${h}</th>`;
+      });
+      html += '</tr></thead><tbody>';
+      allRows.forEach(row => {
+        html += '<tr>';
+        row.forEach((cell, i) => {
+          if (visibleColumns.has(headers[i])) {
+            html += `<td contenteditable="true" class="border px-2 py-1 whitespace-pre-wrap">${cell}</td>`;
+          }
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      preview.innerHTML = html;
+    }
+
+    function exportFiles() {
+      if (!headers.length) return alert('No data to export.');
+      filesData.forEach(f => {
+        const base = f.name.replace(/\.[^/.]+$/, '');
+        const cols = headers.filter(h => visibleColumns.has(h));
+        const filtered = f.rows.map(r => cols.map(h => r[headers.indexOf(h)] || ''));
+
+        if (f.name.includes('D-') && typeof XLSX !== 'undefined') {
+          const wb = XLSX.utils.book_new();
+          const wsData = XLSX.utils.aoa_to_sheet([cols, ...filtered]);
+          XLSX.utils.book_append_sheet(wb, wsData, base);
+
+          const skuIdx = headers.indexOf('SKU1');
+          const qtyIdx = headers.indexOf('Qty');
+          const totals = {};
+          f.rows.forEach(r => {
+            const sku = r[skuIdx];
+            const qty = parseFloat(r[qtyIdx]) || 0;
+            totals[sku] = (totals[sku] || 0) + qty;
+          });
+          const pivotArr = [['Row Labels', 'Sum of Qty']];
+          let grandTotal = 0;
+          Object.entries(totals).forEach(([sku, sum]) => {
+            pivotArr.push([sku, sum]);
+            grandTotal += sum;
+          });
+          pivotArr.push(['Grand Total', grandTotal]);
+          const wsPivot = XLSX.utils.aoa_to_sheet(pivotArr);
+          XLSX.utils.book_append_sheet(wb, wsPivot, 'Pivot');
+
+          XLSX.writeFile(wb, `${base}.xlsx`);
+        } else {
+          const csv = [cols, ...filtered].map(r => r.join(',')).join('\r\n');
+          const blob = new Blob(["﻿" + csv], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${base}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+      });
+    }
+  </script>
+</body>
+</html>
