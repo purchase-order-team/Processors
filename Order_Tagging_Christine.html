@@ -97,7 +97,9 @@
       font-size: 16px;
       color: var(--primary-color);
     }
-    #output, #ordersOutput {
+    /* both output panes use the same styling */
+    #output,
+    #ordersOutput {
       flex: 1;
       overflow: auto;
       white-space: pre-wrap;
@@ -147,6 +149,7 @@
       <div class="card output-card">
         <h3>Order Numbers</h3>
         <button class="copy-btn" onclick="copyOrders()">Copy Order Numbers</button>
+        <!-- non-editable display -->
         <div id="ordersOutput"></div>
       </div>
     </div>
@@ -173,14 +176,12 @@
           : line.split(/\s+/).filter(t => t);
 
         if (tokens.length > 1) {
-          // Flush previous line if it exists
           if (currentLine.length && !ignoreCurrent) {
             results.push([...currentLine]);
           }
           let orderRaw = tokens[0];
           const skus = tokens.slice(1);
 
-          // Skip mix orders entirely
           if (/-MIX/i.test(orderRaw)) {
             ignoreCurrent = true;
             mmFlag = false;
@@ -191,7 +192,6 @@
           mmFlag = /-MM\d*$/i.test(orderRaw);
           const order = orderRaw.replace(/-MM\d*$/i, '');
 
-          // Handle duplicate -MM: append up to 2 SKUs total, drop extras
           if (mmFlag && encountered.has(order)) {
             const orphanSkus = skus.slice(0, 2);
             const mainRow = results.find(r => r[0] === order);
@@ -205,12 +205,8 @@
             continue;
           }
 
-          // Mark first occurrence of a -MM order
-          if (mmFlag) {
-            encountered.add(order);
-          }
+          if (mmFlag) encountered.add(order);
 
-          // Start a new main line
           ignoreCurrent = false;
           currentLine = [order];
           if (mmFlag) {
@@ -219,19 +215,16 @@
             currentLine.push(...skus);
           }
         } else {
-          // Continuation SKU lines
           if (ignoreCurrent) continue;
           if (mmFlag && currentLine.length - 1 >= 2) continue;
           currentLine.push(tokens[0]);
         }
       }
 
-      // Flush the final line
       if (currentLine.length && !ignoreCurrent) {
         results.push([...currentLine]);
       }
 
-      // Assemble formatted output
       const formatted = results.map(r => r.join('\t') + '\t\t;');
       lastOrders = results.map(r => r[0]);
 
@@ -244,18 +237,26 @@
       const out = document.getElementById('output');
       const range = document.createRange();
       range.selectNodeContents(out);
-      const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
-      document.execCommand('copy'); sel.removeAllRanges();
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      document.execCommand('copy');
+      sel.removeAllRanges();
       alert('Formatted text copied!');
     }
 
     function copyOrders() {
-      const out = document.getElementById('ordersOutput');
-      const range = document.createRange();
-      range.selectNodeContents(out);
-      const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
-      document.execCommand('copy'); sel.removeAllRanges();
-      alert('Order numbers copied!');
+      // prepare Windows-style CRLF text
+      const text = lastOrders.join('\r\n');
+      const ta = document.createElement('textarea');
+      ta.style.position = 'absolute';
+      ta.style.left = '-9999px';
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      alert('Order numbers copied! Paste into Excel and each will go in its own cell down the column.');
     }
 
     function resetAll() {
@@ -266,6 +267,5 @@
       lastOrders = [];
     }
   </script>
-
 </body>
 </html>
