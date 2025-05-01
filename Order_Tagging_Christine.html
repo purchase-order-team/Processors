@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Order Tagging</title>
+  <style>
+    :root {
+      --primary-color: #2c3e50;
+      --secondary-color: #ecf0f1;
+      --accent-color: #3498db;
+      --text-color: #34495e;
+      --card-bg: #ffffff;
+      --border-radius: 8px;
+      --box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--secondary-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .wrapper {
+      max-width: 1200px;
+      width: 100%;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      margin: 0;
+      color: var(--primary-color);
+      font-size: 24px;
+    }
+    .byline {
+      font-size: 14px;
+      color: var(--text-color);
+      font-style: italic;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    textarea {
+      width: 100%;
+      height: 180px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 14px;
+      border: 1px solid #bdc3c7;
+      border-radius: var(--border-radius);
+      resize: vertical;
+      background: #fafafa;
+    }
+    .buttons {
+      display: flex;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    button {
+      padding: 8px 12px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #fff;
+      background: var(--accent-color);
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+    }
+    .output-card {
+      display: flex;
+      flex-direction: column;
+    }
+    .output-card h3 {
+      margin: 0 0 10px;
+      font-size: 16px;
+      color: var(--primary-color);
+    }
+    #output, #ordersOutput {
+      flex: 1;
+      overflow: auto;
+      white-space: pre-wrap;
+      background: var(--secondary-color);
+      padding: 15px;
+      border: 1px solid #bdc3c7;
+      border-radius: var(--border-radius);
+      font-family: monospace;
+      font-size: 14px;
+      color: var(--text-color);
+      min-height: 180px;
+    }
+    #total {
+      text-align: left;
+      font-size: 16px;
+      margin: 20px 0 10px;
+      color: var(--primary-color);
+      font-weight: bold;
+    }
+    .copy-btn {
+      margin-bottom: 10px;
+      align-self: flex-start;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>Order Tagging</h1>
+      <div class="byline">By: Christine Anastacio</div>
+    </div>
+    <div class="card">
+      <h3>Input</h3>
+      <textarea id="input" placeholder="Paste Order Numbers and SKUs here..."></textarea>
+      <div class="buttons">
+        <button onclick="formatOrders()">Format</button>
+        <button onclick="resetAll()">Reset</button>
+      </div>
+    </div>
+    <div id="total">Total Orders: 0</div>
+    <div class="container">
+      <div class="card output-card">
+        <h3>Formatted Output</h3>
+        <button class="copy-btn" onclick="copyOutput()">Copy Formatted</button>
+        <div id="output"></div>
+      </div>
+      <div class="card output-card">
+        <h3>Order Numbers</h3>
+        <button class="copy-btn" onclick="copyOrders()">Copy Order Numbers</button>
+        <div id="ordersOutput"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let lastOrders = [];
+    function formatOrders() {
+      const rawLines = document.getElementById('input').value
+                             .split('\n')
+                             .map(l => l.replace(/\r/g, ''));
+      const results = [];
+      const encountered = new Set();
+      let currentLine = [];
+      let ignoreCurrent = false;
+      let mmFlag = false;
+
+      for (let raw of rawLines) {
+        const line = raw.trim();
+        if (!line) continue;
+
+        const tokens = line.includes(';')
+          ? line.split(';').map(t => t.trim()).filter(t => t)
+          : line.split(/\s+/).filter(t => t);
+
+        if (tokens.length > 1) {
+          // Flush previous line if it exists
+          if (currentLine.length && !ignoreCurrent) {
+            results.push([...currentLine]);
+          }
+          let orderRaw = tokens[0];
+          const skus = tokens.slice(1);
+
+          // Skip mix orders entirely
+          if (/-MIX/i.test(orderRaw)) {
+            ignoreCurrent = true;
+            mmFlag = false;
+            currentLine = [];
+            continue;
+          }
+
+          mmFlag = /-MM\d*$/i.test(orderRaw);
+          const order = orderRaw.replace(/-MM\d*$/i, '');
+
+          // Handle duplicate -MM: append up to 2 SKUs total, drop extras
+          if (mmFlag && encountered.has(order)) {
+            const orphanSkus = skus.slice(0, 2);
+            const mainRow = results.find(r => r[0] === order);
+            orphanSkus.forEach(sku => {
+              if (mainRow && mainRow.length < 3) {
+                mainRow.push(sku);
+              }
+            });
+            ignoreCurrent = true;
+            currentLine = [];
+            continue;
+          }
+
+          // Mark first occurrence of a -MM order
+          if (mmFlag) {
+            encountered.add(order);
+          }
+
+          // Start a new main line
+          ignoreCurrent = false;
+          currentLine = [order];
+          if (mmFlag) {
+            currentLine.push(...skus.slice(0, 2));
+          } else {
+            currentLine.push(...skus);
+          }
+        } else {
+          // Continuation SKU lines
+          if (ignoreCurrent) continue;
+          if (mmFlag && currentLine.length - 1 >= 2) continue;
+          currentLine.push(tokens[0]);
+        }
+      }
+
+      // Flush the final line
+      if (currentLine.length && !ignoreCurrent) {
+        results.push([...currentLine]);
+      }
+
+      // Assemble formatted output
+      const formatted = results.map(r => r.join('\t') + '\t\t;');
+      lastOrders = results.map(r => r[0]);
+
+      document.getElementById('output').textContent = formatted.join('\n');
+      document.getElementById('ordersOutput').textContent = lastOrders.join('\n');
+      document.getElementById('total').textContent = 'Total Orders: ' + formatted.length;
+    }
+
+    function copyOutput() {
+      const out = document.getElementById('output');
+      const range = document.createRange();
+      range.selectNodeContents(out);
+      const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      document.execCommand('copy'); sel.removeAllRanges();
+      alert('Formatted text copied!');
+    }
+
+    function copyOrders() {
+      const out = document.getElementById('ordersOutput');
+      const range = document.createRange();
+      range.selectNodeContents(out);
+      const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      document.execCommand('copy'); sel.removeAllRanges();
+      alert('Order numbers copied!');
+    }
+
+    function resetAll() {
+      document.getElementById('input').value = '';
+      document.getElementById('output').textContent = '';
+      document.getElementById('ordersOutput').textContent = '';
+      document.getElementById('total').textContent = 'Total Orders: 0';
+      lastOrders = [];
+    }
+  </script>
+
+</body>
+</html>
