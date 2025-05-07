@@ -149,7 +149,6 @@
       <div class="card output-card">
         <h3>Order Numbers</h3>
         <button class="copy-btn" onclick="copyOrders()">Copy Order Numbers</button>
-        <!-- non-editable display -->
         <div id="ordersOutput"></div>
       </div>
     </div>
@@ -159,8 +158,8 @@
     let lastOrders = [];
     function formatOrders() {
       const rawLines = document.getElementById('input').value
-                             .split('\n')
-                             .map(l => l.replace(/\r/g, ''));
+        .split('\n')
+        .map(l => l.replace(/\r/g, ''));
       const results = [];
       const encountered = new Set();
       let currentLine = [];
@@ -246,7 +245,6 @@
     }
 
     function copyOrders() {
-      // prepare Windows-style CRLF text
       const text = lastOrders.join('\r\n');
       const ta = document.createElement('textarea');
       ta.style.position = 'absolute';
