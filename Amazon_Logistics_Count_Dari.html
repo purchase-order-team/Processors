@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Amazon Shipping</title>
+</head>
+<body>
+
+<h2>Amazon Shipping Count</h2>
+
+
+<textarea id="myTextarea" rows="10" cols="50"></textarea>
+
+
+<p>Total Order: <span id="col1Count">0</span></p>
+<p>Total Item: <span id="col3Count">0</span></p>
+
+<script>
+  const textarea = document.getElementById("myTextarea");
+  const col1Display = document.getElementById("col1Count");
+  const col3Display = document.getElementById("col3Count");
+
+  function countColumns() {
+    const lines = textarea.value.trim().split(/\r\n|\r|\n/); 
+    let col1Count = 0;
+    let col3Count = 0;
+
+    
+    lines.forEach(line => {
+      
+      const columns = line.split(/[\s,]+/); 
+      
+      if (columns[0] && columns[0].trim() !== "") {
+        col1Count++;
+      }
+
+     
+      if (columns[2] && columns[2].trim() !== "") {
+        col3Count++;
+      }
+    });
+
+   
+    col1Display.textContent = col1Count;
+    col3Display.textContent = col3Count;
+  }
+
+ 
+  textarea.addEventListener("input", countColumns);
+</script>
+
+</body>
+</html>
