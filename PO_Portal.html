@@ -38,6 +38,18 @@
     .project-content p{color:#555;margin-bottom:1rem;font-size:0.95rem;}
     .view-tool{display:inline-block;text-decoration:none;font-weight:600;color:var(--primary-color);transition:border-color var(--transition);border-bottom:2px solid transparent;cursor:pointer;}
     .view-tool:hover{border-color:var(--primary-hover);}
+    #tutorial-modal.modal-content { background: #fff; padding: var(--spacing); border-radius: var(--radius); max-width: 800px; width: 90%; position: relative; text-align: center;}
+#tutorial-modal .modal-content { width: 90vw; max-width: 1200px; max-height: 90vh; }
+#tutorial-modal .modal-content iframe { width: 100%; height: 85vh; }
+	  .close-modal { position: absolute; top: 10px; right: 10px; background: var(--primary-color); color: #fff; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 1.2rem; line-height: 30px; text-align: center;}
+	  .tutorial-link { text-decoration: none; font-weight: bold; color: var(--primary-color); float: right; border-bottom: 2px solid transparent; transition: border-color var(--transition-speed);}
+	  .tutorial-link:hover { text-decoration: underline; border-color: var(--primary-hover);}
+	  .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center; z-index: 1000;}
+      #tutorial-modal .modal-content { position: relative; }
+      #tutorial-modal .modal-content { max-height: 95vh; overflow-y: auto; }
+	  #tutorial-modal .close-modal { position: absolute; top: 1rem; left: 1rem; }
+      #tutorial-modal .close-modal {background:var(--primary-color);color:#fff;border:none;border-radius:50%;width:2.5rem;height:2.5rem;display:flex;align-items:center;justify-content:center;position:absolute;top:1rem;right:1rem;font-size:1.2rem;}
+      #tutorial-modal .back-btn { position: absolute; top: 1.5rem; left: var(--spacing); }
     footer{background:#fff;text-align:center;padding:var(--spacing) 0;color:#777;font-size:0.875rem;border-top:1px solid #eaeaea;}
   </style>
 </head>
@@ -60,6 +72,12 @@
     <button id="back-btn">← Back to Home</button>
     <iframe id="tool-frame"></iframe>
   </div>
+        <div id="tutorial-modal" class="modal-overlay">
+        <div class="modal-content">
+        <button id="tutorial-back-btn" class="back-btn" onclick="document.getElementById('tutorial-video').src='';document.getElementById('tutorial-modal').style.display='none'">← Back to Projects</button>
+        <iframe id="tutorial-video" src="" allowfullscreen></iframe>
+    </div>
+    </div>
   <main>
     <div class="search-container">
       <select id="search" aria-label="Select project owner">
@@ -87,6 +105,7 @@
           <h2>Ordering File Generator</h2>
           <p>Prepares and formats files for seamless NetSuite PO imports.</p>
           <a class="view-tool" data-src="https://purchase-order-team.github.io/Processors/Depo_KSI_FileGenerator_Marcus_Kathleen.html">View Tool &rarr;</a>
+          <a class="tutorial-link" data-video="YOUR_TUTORIAL_VIDEO_URL">View Tutorial &rarr;</a>
         </div>
       </div>
       <!-- NetSuite Importing Tool -->
@@ -102,6 +121,7 @@
           <h2>NetSuite Importing Tool</h2>
           <p>Formats and validates data files for smooth import into NetSuite.</p>
           <a class="view-tool" data-src="https://purchase-order-team.github.io/Processors/NetSuite_Importing_Tool_Marcus_Kathleen.html">View Tool &rarr;</a>
+          <a class="tutorial-link" data-video="YOUR_TUTORIAL_VIDEO_URL">View Tutorial &rarr;</a>
         </div>
       </div>
       <!-- Order Tagging Tool -->
@@ -115,6 +135,7 @@
           <h2>Order Tagging Tool</h2>
           <p>Processes detailed order data to ensure accurate tagging and fulfillment in ShipStation.</p>
           <a class="view-tool" data-src="https://purchase-order-team.github.io/Processors/Order_Tagging_Christine.html">View Tool &rarr;</a>
+          <a class="tutorial-link" data-video="YOUR_TUTORIAL_VIDEO_URL">View Tutorial &rarr;</a>
         </div>
       </div>
       <!-- International Address Sweeping Tool -->
@@ -130,6 +151,7 @@
           <h2>International Address Sweeping Tool</h2>
           <p>Identifies and tracks international shipments to verify proper processing.</p>
           <a class="view-tool" data-src="https://purchase-order-team.github.io/Processors/International_Address_Sweep.html">View Tool &rarr;</a>
+          <a class="tutorial-link" data-video="YOUR_TUTORIAL_VIDEO_URL">View Tutorial &rarr;</a>
         </div>
       </div>
       <!-- PO Scrubbing Tool -->
@@ -143,6 +165,7 @@
           <h2>PO Scrubbing Tool</h2>
           <p>Validates selected SKUs to prevent duplicates and ensure accurate fulfillment.</p>
           <a class="view-tool" data-src="https://purchase-order-team.github.io/Processors/POScrubbing_Mary.html">View Tool &rarr;</a>
+          <a class="tutorial-link" data-video="YOUR_TUTORIAL_VIDEO_URL">View Tutorial &rarr;</a>
         </div>
       </div>
       <!-- Carrier Count Tool -->
@@ -156,6 +179,7 @@
           <h2>Carrier Count Tool</h2>
           <p>Generates daily summaries of carriers used.</p>
           <a class="view-tool" data-src="https://purchase-order-team.github.io/Processors/carrier_count_Jerrilyn.html">View Tool &rarr;</a>
+          <a class="tutorial-link" data-video="YOUR_TUTORIAL_VIDEO_URL">View Tutorial &rarr;</a>
         </div>
       </div>
       <!-- NPM Calculator Tool -->
@@ -171,6 +195,7 @@
           <h2>NPM Calculator</h2>
           <p>Calculates net profit margins per order and flags high shipping costs to inform pricing decisions.</p>
           <a class="view-tool" data-src="https://purchase-order-team.github.io/Processors/NPM_Calc_for_Labelling.html">View Tool &rarr;</a>
+          <a class="tutorial-link" data-video="YOUR_TUTORIAL_VIDEO_URL">View Tutorial &rarr;</a>
         </div>
       </div>
     </div>
@@ -184,6 +209,10 @@
     document.querySelectorAll('.owner-toggle').forEach(btn=>btn.addEventListener('click',()=>{const info=btn.nextElementSibling;info.style.display=info.style.display==='block'?'none':'block';}));
     document.querySelectorAll('.view-tool').forEach(link=>link.addEventListener('click',e=>{e.preventDefault();const src=link.getAttribute('data-src');document.getElementById('tool-frame').src=src;document.querySelector('main').style.display='none';document.getElementById('tool-viewer').style.display='flex';}));
     document.getElementById('back-btn').addEventListener('click',()=>{document.getElementById('tool-viewer').style.display='none';document.querySelector('main').style.display='';document.getElementById('tool-frame').src='';});
+    document.querySelectorAll('.tutorial-link').forEach(l=>l.addEventListener('click',e=>{e.preventDefault();document.getElementById('tutorial-video').src=l.getAttribute('data-video');document.getElementById('tutorial-modal').style.display='flex';}));
+    document.querySelectorAll('.tutorial-link').forEach(l=>l.addEventListener('click',e=>{const t=l.closest('.project-card').querySelector('h2').innerText,mc=document.querySelector('#tutorial-modal .modal-content');mc.querySelector('h2')&&mc.querySelector('h2').remove();mc.insertAdjacentHTML('afterbegin',`<h2 style="margin:0 0 1rem;color:var(--primary-color)">${t}</h2>`);}));
+	  document.querySelector('.close-modal').addEventListener('click',()=>{const m=document.getElementById('tutorial-modal'),f=document.getElementById('tutorial-video');f.src='';m.style.display='none';});
+      
   </script>
 </body>
 </html>
