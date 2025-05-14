@@ -4,165 +4,173 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PO Team Projects</title>
-  <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --primary-color: #24305E;
-      --primary-hover: #374785;
-      --background-color: #F8F9FA;
-      --card-bg: #FFFFFF;
-      --text-color: #2C3E50;
-      --spacing: 1.5rem;
-      --radius: 0.5rem;
-      --transition-speed: 0.3s;
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: var(--background-color);
-      color: var(--text-color);
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-    /* Welcome Modal */
-    #welcome-modal {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 1000;
-    }
-    .modal-content {
-      background: #fff; padding: var(--spacing); border-radius: var(--radius);
-      max-width: 400px; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-    .modal-content h2 { margin-bottom: 1rem; font-size: 1.5rem; color: var(--primary-color); }
-    .modal-content p { margin-bottom: 1.5rem; color: #555; }
-    .modal-content button {
-      padding: 0.5rem 1rem; border: none;
-      background: var(--primary-color); color: #fff;
-      border-radius: var(--radius); cursor: pointer;
-    }
-    header {
-      background-color: #fff;
-      padding: calc(var(--spacing) * 1.5) var(--spacing);
-      text-align: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .header-content img { max-height: 20px; margin-bottom: var(--spacing); }
-    .header-content h1 { font-size: 3rem; font-weight: 700; color: var(--primary-color); }
-    .header-content p { margin-top: 0.5rem; color: #555; font-size: 1rem; }
-    #tool-viewer { display: none; flex: 1; flex-direction: column; }
-    #tool-viewer iframe { width: 100%; height: 80vh; border: none; }
-    #back-btn { background: var(--primary-color); color: #fff; border: none; padding: 0.5rem 1rem; margin: var(--spacing); border-radius: var(--radius); cursor: pointer; }
-    main { flex: 1; max-width: 1200px; margin: var(--spacing) auto; padding: 0 var(--spacing); }
-    .search-container { text-align: center; margin-bottom: var(--spacing); }
-    .search-container select {
-      width: 100%; max-width: 360px; padding: 0.75rem 1rem;
-      border: 1px solid #ccc; border-radius: var(--radius); font-size: 1rem;
-      transition: border-color var(--transition-speed);
-    }
-    .search-container select:focus {
-      outline: none; border-color: var(--primary-color);
-      box-shadow: 0 0 0 3px rgba(36,48,94,0.15);
-    }
-    .projects-container {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr));
-      gap: var(--spacing); animation: fadeIn 0.6s ease-in;
-    }
-    @keyframes fadeIn { from { opacity:0; transform:translateY(10px);} to { opacity:1; transform:translateY(0);} }
-    .project-card {
-      background-color: var(--card-bg); border-radius: var(--radius);
-      overflow: hidden; box-shadow:0 4px 8px rgba(0,0,0,0.05);
-      transition: transform var(--transition-speed), box-shadow var(--transition-speed);
-      text-align:center;
-    }
-    .project-card:hover { transform:translateY(-4px); box-shadow:0 8px 16px rgba(0,0,0,0.1);}    
-    .owner-photo { width:60px; height:60px; border-radius:50%; object-fit:cover; margin:var(--spacing) auto 0; border:2px solid var(--primary-color);}    
-    .owner-name { margin:0.5rem 0; font-size:1rem; font-weight:600; color:var(--primary-color);}    
-    .project-content { padding:var(--spacing); text-align:left;}    
-    .project-content h2 { font-size:1.5rem; font-weight:700; margin-bottom:0.5rem; color:var(--primary-color);}    
-    .project-content p { margin-bottom:1rem; color:#555; font-size:0.95rem;}    
-    .view-tool { text-decoration:none; font-weight:600; color:var(--primary-color); border-bottom:2px solid transparent; transition:border-color var(--transition-speed); cursor:pointer;}    
-    .view-tool:hover { border-color:var(--primary-hover);}    
-    footer { background-color:#fff; text-align:center; padding:var(--spacing) 0; font-size:0.875rem; color:#777; border-top:1px solid #eaeaea; }
+    :root { --primary-color:#24305E; --primary-hover:#374785; --background:#F8F9FA; --card-bg:#FFFFFF; --text-color:#2C3E50; --spacing:1.5rem; --radius:0.5rem; --transition:0.3s; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Inter',sans-serif;background:var(--background);color:var(--text-color);display:flex;flex-direction:column;min-height:100vh;}
+    #welcome-modal{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;}
+    .modal-content{background:#fff;padding:var(--spacing);border-radius:var(--radius);max-width:400px;text-align:center;box-shadow:0 4px 8px rgba(0,0,0,0.2);}
+    .modal-content h2{color:var(--primary-color);margin-bottom:1rem;}
+    .modal-content p{color:#555;margin-bottom:1.5rem;}
+    .modal-content button{background:var(--primary-color);color:#fff;border:none;padding:0.5rem 1rem;border-radius:var(--radius);cursor:pointer;}
+    header{background:#fff;padding:calc(var(--spacing)*1.5) var(--spacing);text-align:center;box-shadow:0 2px 4px rgba(0,0,0,0.1);}
+    .header-content img{max-height:20px;margin-bottom:var(--spacing);}
+    .header-content h1{font-size:2.5rem;color:var(--primary-color);}
+    .header-content p{color:#555;margin-top:0.5rem;}
+    #tool-viewer{display:none;flex:1;flex-direction:column;}
+    #tool-viewer iframe{flex:1;border:none;width:100%;height:80vh;}
+    #back-btn{background:var(--primary-color);color:#fff;border:none;padding:0.5rem 1rem;margin:var(--spacing);border-radius:var(--radius);cursor:pointer;align-self:start;}
+    main{flex:1;max-width:1200px;margin:var(--spacing) auto;padding:0 var(--spacing);}
+    .search-container{margin-bottom:var(--spacing);text-align:center;}
+    .search-container select{width:100%;max-width:360px;padding:0.75rem 1rem;border:1px solid #ccc;border-radius:var(--radius);font-size:1rem;transition:border-color var(--transition);}
+    .search-container select:focus{outline:none;border-color:var(--primary-color);box-shadow:0 0 0 3px rgba(36,48,94,0.15);}
+    .projects-container{display:flex;flex-wrap:wrap;justify-content:center;gap:var(--spacing);}
+    .project-card{flex:1 1 calc(50% - var(--spacing));max-width:360px;background:var(--card-bg);border-radius:var(--radius);box-shadow:0 4px 8px rgba(0,0,0,0.05);transition:transform var(--transition),box-shadow var(--transition);position:relative;overflow:hidden;margin:var(--spacing) 0;}
+    .project-card:hover{transform:translateY(-4px);box-shadow:0 8px 16px rgba(0,0,0,0.1);}
+    .owner-toggle{display:block;margin:var(--spacing) auto 0;padding:0.5rem 1rem;background:var(--primary-color);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;transition:background var(--transition);}
+    .owner-toggle:hover{background:var(--primary-hover);}
+    .owner-info{display:none;padding:var(--spacing);background:#f0f4f8;}
+    .owner-photo{width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid var(--primary-color);display:block;margin:0 auto;}
+    .owner-name{text-align:center;margin-top:0.5rem;color:var(--primary-color);font-weight:600;}
+    .project-content{padding:var(--spacing);text-align:left;}
+    .project-content h2{font-size:1.25rem;color:var(--primary-color);margin-bottom:0.5rem;}
+    .project-content p{color:#555;margin-bottom:1rem;font-size:0.95rem;}
+    .view-tool{display:inline-block;text-decoration:none;font-weight:600;color:var(--primary-color);transition:border-color var(--transition);border-bottom:2px solid transparent;cursor:pointer;}
+    .view-tool:hover{border-color:var(--primary-hover);}
+    footer{background:#fff;text-align:center;padding:var(--spacing) 0;color:#777;font-size:0.875rem;border-top:1px solid #eaeaea;}
   </style>
 </head>
 <body>
-  <!-- Welcome Modal -->
   <div id="welcome-modal">
     <div class="modal-content">
       <h2>Welcome!</h2>
-      <p>Here you can explore all the projects created by our Purchase Order team.</p>
+      <p>Here you can explore all the projects created by the PO team.</p>
       <button id="modal-close">Get Started</button>
     </div>
   </div>
   <header>
     <div class="header-content">
-      <img src="https://raw.githubusercontent.com/purchase-order-team/Processors/62e7815bfb9dfad3309306b8ab4d1d09da974eff/path/to/photos/Default%20KarParts360%20LOGO%20Version%203.png" alt="KarParts360 Logo">
+      <img src="https://raw.githubusercontent.com/purchase-order-team/Processors/main/path/to/photos/Default%20KarParts360%20LOGO%20Version%203.png" alt="KarParts360 Logo">
       <h1>PO Team Projects</h1>
       <p>Discover what our teammates are working on</p>
     </div>
   </header>
   <div id="tool-viewer">
     <button id="back-btn">← Back to Home</button>
-    <iframe id="tool-frame" src=""></iframe>
+    <iframe id="tool-frame"></iframe>
   </div>
   <main>
     <div class="search-container">
       <select id="search" aria-label="Select project owner">
         <option value="">Filter by owner</option>
-        <option value="Ariane De Guzman">Ariane De Guzman</option>
-        <option value="Mariel Zipagan">Mariel Zipagan</option>
-        <option value="Cyrus James Llanes Paet">Cyrus James Llanes Paet</option>
-        <option value="Jovilyn Casipe Leonoras">Jovilyn Casipe Leonoras</option>
-        <option value="Hyacinth Cipriano">Hyacinth Cipriano</option>
+        <option value="Marcus Bañez">Marcus Bañez</option>
+        <option value="Kathleen Delos Santos">Kathleen Delos Santos</option>
+        <option value="Christine Anastacio">Christine Anastacio</option>
+        <option value="Mary Guray">Mary Guray</option>
+        <option value="Jerrilyn Alarma">Jerrilyn Alarma</option>
         <option value="Shari Kristine Torres">Shari Kristine Torres</option>
         <option value="Hannah Ranario">Hannah Ranario</option>
-        <option value="Mary Guray">Mary Guray</option>
-        <option value="Daryl Pagilagan">Daryl Pagilagan</option>
-        <option value="Jerrilyn Alarma">Jerrilyn Alarma</option>
-        <option value="Daricalyn Rosales">Daricalyn Rosales</option>
-        <option value="Marcus Bañez,Kathleen Delos Santos">Marcus Bañez &amp; Kathleen Delos Santos</option>
-        <option value="Cheztierlee Dimple Arlos">Cheztierlee Dimple Arlos</option>
-        <option value="Christine Anastacio">Christine Anastacio</option>
       </select>
     </div>
     <div id="projects" class="projects-container">
-      <!-- Ordering File Generator Card -->
+      <!-- Ordering File Generator -->
       <div class="project-card" data-title="Marcus Bañez,Kathleen Delos Santos">
-        <img src="https://raw.githubusercontent.com/purchase-order-team/Processors/ed28b42502d58914d5d871fe8e72a306c19662d8/path/to/photos/test%20avatar.png" alt="Marcus Bañez" class="owner-photo">
-        <div class="owner-name">Marcus Bañez</div>
-        <img src="https://raw.githubusercontent.com/purchase-order-team/Processors/ed28b42502d58914d5d871fe8e72a306c19662d8/path/to/photos/test%20avatar.png" alt="Kathleen Delos Santos" class="owner-photo">
-        <div class="owner-name">Kathleen Delos Santos</div>
+        <button class="owner-toggle">Owners</button>
+        <div class="owner-info">
+          <img class="owner-photo" src="https://raw.githubusercontent.com/purchase-order-team/Processors/main/path/to/photos/test%20avatar.png" alt="Marcus Bañez">
+          <div class="owner-name">Marcus Bañez</div>
+          <img class="owner-photo" src="https://raw.githubusercontent.com/purchase-order-team/Processors/main/path/to/photos/test%20avatar.png" alt="Kathleen Delos Santos">
+          <div class="owner-name">Kathleen Delos Santos</div>
+        </div>
         <div class="project-content">
           <h2>Ordering File Generator</h2>
-          <p>This tool prepares files to import into NetSuite for generating purchase orders efficiently.</p>
+          <p>Prepares and formats files for seamless NetSuite PO imports.</p>
           <a class="view-tool" data-src="https://purchase-order-team.github.io/Processors/Depo_KSI_FileGenerator_Marcus_Kathleen.html">View Tool &rarr;</a>
         </div>
       </div>
-      <!-- Netsuite Importing Tool Card -->
+      <!-- NetSuite Importing Tool -->
       <div class="project-card" data-title="Marcus Bañez,Kathleen Delos Santos">
-        <img src="https://raw.githubusercontent.com/purchase-order-team/Processors/ed28b42502d58914d5d871fe8e72a306c19662d8/path/to/photos/test%20avatar.png" alt="Marcus Bañez" class="owner-photo">
-        <div class="owner-name">Marcus Bañez</div>
-        <img src="https://raw.githubusercontent.com/purchase-order-team/Processors/ed28b42502d58914d5d871fe8e72a306c19662d8/path/to/photos/test%20avatar.png" alt="Kathleen Delos Santos" class="owner-photo">
-        <div class="owner-name">Kathleen Delos Santos</div>
+        <button class="owner-toggle">Owners</button>
+        <div class="owner-info">
+          <img class="owner-photo" src="https://raw.githubusercontent.com/purchase-order-team/Processors/main/path/to/photos/test%20avatar.png" alt="Marcus Bañez">
+          <div class="owner-name">Marcus Bañez</div>
+          <img class="owner-photo" src="https://raw.githubusercontent.com/purchase-order-team/Processors/main/path/to/photos/test%20avatar.png" alt="Kathleen Delos Santos">
+          <div class="owner-name">Kathleen Delos Santos</div>
+        </div>
         <div class="project-content">
           <h2>NetSuite Importing Tool</h2>
-          <p>This tool adjusts and formats data files for seamless import into NetSuite.</p>
+          <p>Formats and validates data files for smooth import into NetSuite.</p>
           <a class="view-tool" data-src="https://purchase-order-team.github.io/Processors/NetSuite_Importing_Tool_Marcus_Kathleen.html">View Tool &rarr;</a>
         </div>
       </div>
-          <!-- Order Tagging Tool Card -->
+      <!-- Order Tagging Tool -->
       <div class="project-card" data-title="Christine Anastacio">
-        <img src="https://raw.githubusercontent.com/purchase-order-team/Processors/ed28b42502d58914d5d871fe8e72a306c19662d8/path/to/photos/test%20avatar.png" alt="Christine Anastacio" class="owner-photo">
-        <div class="owner-name">Christine Anastacio</div>
+        <button class="owner-toggle">Owners</button>
+        <div class="owner-info">
+          <img class="owner-photo" src="https://raw.githubusercontent.com/purchase-order-team/Processors/main/path/to/photos/test%20avatar.png" alt="Christine Anastacio">
+          <div class="owner-name">Christine Anastacio</div>
+        </div>
         <div class="project-content">
           <h2>Order Tagging Tool</h2>
-          <p>This utility prepares detailed order data for precise tagging and fulfillment in ShipStation.</p>
+          <p>Processes detailed order data to ensure accurate tagging and fulfillment in ShipStation.</p>
           <a class="view-tool" data-src="https://purchase-order-team.github.io/Processors/Order_Tagging_Christine.html">View Tool &rarr;</a>
+        </div>
+      </div>
+      <!-- International Address Sweeping Tool -->
+      <div class="project-card" data-title="Marcus Bañez,Kathleen Delos Santos">
+        <button class="owner-toggle">Owners</button>
+        <div class="owner-info">
+          <img class="owner-photo" src="https://raw.githubusercontent.com/purchase-order-team/processors/main/path/to/photos/test%20avatar.png" alt="Marcus Bañez">
+          <div class="owner-name">Marcus Bañez</div>
+          <img class="owner-photo" src="https://raw.githubusercontent.com/purchase-order-team/processors/main/path/to/photos/test%20avatar.png" alt="Kathleen Delos Santos">
+          <div class="owner-name">Kathleen Delos Santos</div>
+        </div>
+        <div class="project-content">
+          <h2>International Address Sweeping Tool</h2>
+          <p>Identifies and tracks international shipments to verify proper processing.</p>
+          <a class="view-tool" data-src="https://purchase-order-team.github.io/Processors/International_Address_Sweep.html">View Tool &rarr;</a>
+        </div>
+      </div>
+      <!-- PO Scrubbing Tool -->
+      <div class="project-card" data-title="Mary Guray">
+        <button class="owner-toggle">Owners</button>
+        <div class="owner-info">
+          <img class="owner-photo" src="https://raw.githubusercontent.com/purchase-order-team/Processors/main/path/to/photos/test%20avatar.png" alt="Mary Guray">
+          <div class="owner-name">Mary Guray</div>
+        </div>
+        <div class="project-content">
+          <h2>PO Scrubbing Tool</h2>
+          <p>Validates selected SKUs to prevent duplicates and ensure accurate fulfillment.</p>
+          <a class="view-tool" data-src="https://purchase-order-team.github.io/Processors/POScrubbing_Mary.html">View Tool &rarr;</a>
+        </div>
+      </div>
+      <!-- Carrier Count Tool -->
+      <div class="project-card" data-title="Jerrilyn Alarma">
+        <button class="owner-toggle">Owners</button>
+        <div class="owner-info">
+          <img class="owner-photo" src="https://raw.githubusercontent.com/purchase-order-team/Processors/main/path/to/photos/test%20avatar.png" alt="Jerrilyn Alarma">
+          <div class="owner-name">Jerrilyn Alarma</div>
+        </div>
+        <div class="project-content">
+          <h2>Carrier Count Tool</h2>
+          <p>Generates daily summaries of carriers used.</p>
+          <a class="view-tool" data-src="https://purchase-order-team.github.io/Processors/carrier_count_Jerrilyn.html">View Tool &rarr;</a>
+        </div>
+      </div>
+      <!-- NPM Calculator Tool -->
+      <div class="project-card" data-title="Shari Kristine Torres,Hannah Ranario">
+        <button class="owner-toggle">Owners</button>
+        <div class="owner-info">
+          <img class="owner-photo" src="https://raw.githubusercontent.com/purchase-order-team/Processors/main/path/to/photos/test%20avatar.png" alt="Shari Kristine Torres">
+          <div class="owner-name">Shari Kristine Torres</div>
+          <img class="owner-photo" src="https://raw.githubusercontent.com/purchase-order-team/Processors/main/path/to/photos/test%20avatar.png" alt="Hannah Ranario">
+          <div class="owner-name">Hannah Ranario</div>
+        </div>
+        <div class="project-content">
+          <h2>NPM Calculator</h2>
+          <p>Calculates net profit margins per order and flags high shipping costs to inform pricing decisions.</p>
+          <a class="view-tool" data-src="https://purchase-order-team.github.io/Processors/NPM_Calc_for_Labelling.html">View Tool &rarr;</a>
         </div>
       </div>
     </div>
@@ -171,34 +179,11 @@
     &copy; 2025 KarParts360 PO TEAM. All Rights Reserved.
   </footer>
   <script>
-    // Modal behavior
-    document.getElementById('modal-close').addEventListener('click', () => {
-      document.getElementById('welcome-modal').style.display = 'none';
-    });
-    // Search filter
-    document.getElementById('search').addEventListener('input', function(e) {
-      const term = e.target.value.toLowerCase();
-      document.querySelectorAll('.project-card').forEach(card => {
-        const title = card.getAttribute('data-title').toLowerCase();
-        card.style.display = term === '' || title === term ? 'block' : 'none';
-      });
-    });
-    // View tool in iframe
-    document.querySelectorAll('a.view-tool').forEach(link => {
-      link.addEventListener('click', e => {
-        e.preventDefault();
-        const src = link.getAttribute('data-src');
-        document.getElementById('tool-frame').src = src;
-        document.querySelector('main').style.display = 'none';
-        document.getElementById('tool-viewer').style.display = 'flex';
-      });
-    });
-    // Back button
-    document.getElementById('back-btn').addEventListener('click', () => {
-      document.getElementById('tool-viewer').style.display = 'none';
-      document.querySelector('main').style.display = '';
-      document.getElementById('tool-frame').src = '';
-    });
+    document.getElementById('modal-close').addEventListener('click',()=>{document.getElementById('welcome-modal').style.display='none';});
+    document.getElementById('search').addEventListener('change',function(e){const term=e.target.value.toLowerCase();document.querySelectorAll('.project-card').forEach(card=>{const title=card.getAttribute('data-title').toLowerCase();card.style.display=term===''||title.includes(term)?'block':'none';});});
+    document.querySelectorAll('.owner-toggle').forEach(btn=>btn.addEventListener('click',()=>{const info=btn.nextElementSibling;info.style.display=info.style.display==='block'?'none':'block';}));
+    document.querySelectorAll('.view-tool').forEach(link=>link.addEventListener('click',e=>{e.preventDefault();const src=link.getAttribute('data-src');document.getElementById('tool-frame').src=src;document.querySelector('main').style.display='none';document.getElementById('tool-viewer').style.display='flex';}));
+    document.getElementById('back-btn').addEventListener('click',()=>{document.getElementById('tool-viewer').style.display='none';document.querySelector('main').style.display='';document.getElementById('tool-frame').src='';});
   </script>
 </body>
 </html>
