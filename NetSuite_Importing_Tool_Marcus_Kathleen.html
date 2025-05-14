@@ -2,65 +2,85 @@
 <!-- Save this code as an .html file and open it in a browser -->
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Netsuite Import File</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NetSuite Importing (UTF-8)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
     .invalid { background-color: #fdd; }
     .warning { background-color: #ffeeba; }
     td[contenteditable="true"] { background-color: #fff8dc; }
     .group-header { font-weight: bold; background-color: #f0f0f0; }
-  </style>
+ 
+    /* Monospaced textarea with visible, wide tabs/spaces */
+    textarea#inputData {
+      font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+      white-space: pre;
+      tab-size: 4;
+      -moz-tab-size: 4;
+      -o-tab-size: 4;
+    }
+</style>
 </head>
 <body class="bg-gray-100 text-gray-900 font-sans p-4 md:p-6">
-  <div class="max-w-7xl mx-auto">
-    <h2 class="text-2xl md:text-3xl font-bold mb-6 text-center md:text-left">NetSuite Importing</h2>
-
+<div class="max-w-7xl mx-auto">
+<!-- Header with title + byline -->
+<div class="flex justify-between items-center mb-6">
+<h2 class="text-2xl md:text-3xl font-bold">NetSuite Importing</h2>
+<span class="text-sm text-gray-600">By: Marcus Banez</span>
+</div>
+ 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-      <div>
-        <label class="block font-medium mb-1">PO Batch Number</label>
-        <input id="defaultPo" type="text" class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., CL250409LKQ-NJ-1T">
-      </div>
-      <div>
-        <label class="block font-medium mb-1">Supplier</label>
-        <select id="defaultSupplier" class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="LKQ">LKQ</option>
-          <option value="DEPO_NJ">DEPO_NJ</option>
-          <option value="DEPO_GA">DEPO_GA</option>
-          <option value="DEPO_IL">DEPO_IL</option>
-          <option value="DEPO_CA">DEPO_CA</option>
-          <option value="EAGLE_NJ">EAGLE_NJ</option>
-          <option value="EAGLE_CA">EAGLE_CA</option>
-          <option value="KSI_NJ">KSI_NJ</option>
-          <option value="KSI_GA">KSI_GA</option>
-          <option value="KSI_IL">KSI_IL</option>
-          <option value="TYC_NJ">TYC_NJ</option>
-          <option value="TYC_GA">TYC_GA</option>
-          <option value="TYC_IL">TYC_IL</option>
-          <option value="TYC_CA">TYC_CA</option>
-        </select>
-      </div>
-    </div>
-
-    <textarea id="inputData" rows="8" class="w-full p-3 border border-gray-300 rounded-md mb-6 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Paste your tab-separated data here..."></textarea>
-
+<div>
+<label class="block font-medium mb-1">PO Batch Number</label>
+<input id="defaultPo" type="text" class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., CL250505LKQ-NJ-1T">
+</div>
+<div>
+<label class="block font-medium mb-1">Supplier</label>
+<select id="defaultSupplier" class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+<option value="LKQ">LKQ</option>
+<option value="DEPO_NJ">DEPO_NJ</option>
+<option value="DEPO_GA">DEPO_GA</option>
+<option value="DEPO_IL">DEPO_IL</option>
+<option value="DEPO_CA">DEPO_CA</option>
+<option value="EAGLE_NJ">EAGLE_NJ</option>
+<option value="EAGLE_CA">EAGLE_CA</option>
+<option value="KSI_NJ">KSI_NJ</option>
+<option value="KSI_GA">KSI_GA</option>
+<option value="KSI_IL">KSI_IL</option>
+<option value="TYC_NJ">TYC_NJ</option>
+<option value="TYC_GA">TYC_GA</option>
+<option value="TYC_IL">TYC_IL</option>
+<option value="TYC_CA">TYC_CA</option>
+</select>
+</div>
+</div>
+ 
+    <!-- Input area with monospaced font and visible tabs -->
+<textarea id="inputData" rows="8" class="w-full p-3 border border-gray-300 rounded-md mb-4 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Paste your tab-separated data here..."></textarea>
+ 
+    <!-- Total Orders & Total Qty -->
+<div class="text-gray-700 font-medium mb-6 flex flex-wrap items-baseline gap-4">
+<div>Total Orders: <span id="totalOrders">0</span></div>
+<div>Total Qty:   <span id="totalQty">0</span></div>
+</div>
+ 
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-      <button onclick="generateCSV()" class="bg-blue-600 text-white px-5 py-3 rounded hover:bg-blue-700 w-full sm:w-auto text-center">Download CSV (UTF-8)</button>
-      <div class="flex-1">
-        <label class="font-medium">Toggle Columns:</label>
-        <div id="toggleControls" class="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 text-sm"></div>
-      </div>
-    </div>
-
+<button onclick="generateCSV()" class="bg-blue-600 text-white px-5 py-3 rounded hover:bg-blue-700 w-full sm:w-auto text-center">Download CSV (UTF-8)</button>
+<div class="flex-1">
+<label class="font-medium">Toggle Columns:</label>
+<div id="toggleControls" class="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 text-sm"></div>
+</div>
+</div>
+ 
     <h3 class="text-xl font-semibold mb-2">Preview (click cells to edit)</h3>
-    <div id="preview" class="overflow-x-auto bg-white p-3 rounded shadow-md"></div>
-  </div>
-
+<div id="preview" class="overflow-x-auto bg-white p-3 rounded shadow-md"></div>
+</div>
+ 
   <script>
     const headers = ["Supplier","PO Number","Order Number","SKU1","SKU2","Qty","Customer Name","Address Street 1","Address Street 2","Address City","Address State","Address Zip","Notes"];
     let visibleColumns = new Set(headers);
-
+ 
     function renderToggleControls() {
       const container = document.getElementById('toggleControls');
       container.innerHTML = '';
@@ -71,56 +91,114 @@
         cb.type = 'checkbox'; cb.checked = true; cb.dataset.col = h;
         cb.addEventListener('change', () => {
           if (cb.checked) visibleColumns.add(h); else visibleColumns.delete(h);
-          renderPreview();
+          renderPreview(); updateCount();
         });
         label.append(cb, document.createTextNode(h));
         container.appendChild(label);
       });
     }
-
+ 
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('inputData').addEventListener('input', () => { renderPreview(); updateCount(); });
+      document.getElementById('defaultPo').addEventListener('input', () => { renderPreview(); updateCount(); });
+      document.getElementById('defaultSupplier').addEventListener('change', () => { renderPreview(); updateCount(); });
+      renderToggleControls();
+      renderPreview();
+      updateCount();
+    });
+ 
     function renderPreview() {
       const raw = document.getElementById('inputData').value.trim();
-      if (!raw) { document.getElementById('preview').innerHTML = '<p class="text-gray-500">No data to preview.</p>'; return; }
-      const lines = raw.split("\n").filter(l => l.trim());
+      const previewEl = document.getElementById('preview');
+      if (!raw) {
+        previewEl.innerHTML = '<p class="text-gray-500">No data to preview.</p>';
+        return;
+      }
+      const linesArr = raw.split("\n").filter(l => l.trim());
       const po = document.getElementById('defaultPo').value.trim();
       const supplier = document.getElementById('defaultSupplier').value.trim();
+      const qtyIdx = headers.indexOf("Qty");
+      const notesIdx = headers.indexOf("Notes");
+      const custIdx = headers.indexOf("Customer Name");
       let html = '<table class="min-w-full text-sm sm:text-base"><thead><tr>' +
-                 headers.map(h => visibleColumns.has(h) ? `<th class="border px-2 py-1 bg-gray-200 sticky top-0">${h}</th>` : '').join('') +
+                 headers.map(h => visibleColumns.has(h)
+                     ? `<th class="px-2 py-1 bg-gray-200 sticky top-0">${h}</th>`
+                     : ''
+                   ).join('') +
                  '</tr></thead><tbody>';
-      let prevRow = null, prevOrder = '';
-      lines.forEach(line => {
+      let prevRow = null;
+      let prevOrder = '';
+      linesArr.forEach(line => {
         const f = line.split("\t");
         if (f.length < 5) return;
-        let [orderNum = '', sku1 = '', sku2 = '', qty = '', cust = '', addr1 = '', addr2 = '', city = '', state = '', zip = ''] = f;
+        let [orderNum='', sku1='', sku2='', qty='', cust='', addr1='', addr2='', city='', state='', zip=''] = f;
         let note = '';
         const m = orderNum.match(/-(R[^-]*|M[^-]*)$/i);
         if (m) { note = m[1]; orderNum = orderNum.slice(0, orderNum.length - m[0].length); }
-        if (!orderNum) orderNum = prevOrder; else prevOrder = orderNum;
-        if (supplier === 'LKQ' && sku1 && !sku1.startsWith('LKQ-')) sku1 = 'LKQ-' + sku1;
+        if (!orderNum) orderNum = prevOrder;
+        else prevOrder = orderNum;
+        if (supplier === 'LKQ' && sku1 && !sku1.startsWith('LKQ-')) { sku1 = 'LKQ-' + sku1; }
         let row = [supplier, po, orderNum, sku1, sku2, qty, cust, addr1, addr2, city, state, zip, note];
         if (prevRow) {
-          row = row.map((c, i) => c.toString().trim() ? c : (i === headers.length - 1 ? '' : prevRow[i]));
+          const sameCust = row[custIdx].trim() && row[custIdx] === prevRow[custIdx];
+          row = row.map((cell, i) => {
+            if (cell.toString().trim()) return cell;
+            if (i === headers.length - 1) return '';
+            return sameCust ? prevRow[i] : '';
+          });
         }
         prevRow = row;
-        html += '<tr>' + row.map((c, i) => visibleColumns.has(headers[i]) ? `<td contenteditable="true" class="border px-2 py-1 whitespace-pre-wrap">${c || ''}</td>` : '').join('') + '</tr>';
+        html += '<tr>';
+        row.forEach((cell, i) => {
+          if (!visibleColumns.has(headers[i])) return;
+          if (i === notesIdx && row[qtyIdx] === '0') {
+            html += `
+<td class="px-2 py-1 border border-gray-200">
+<select onchange="this.closest('tr').dataset.note=this.value">
+<option value="">-- select --</option>
+<option>Buyer Canceled - Not Ordered</option>
+<option>Buyer Canceled - Please Stock</option>
+<option>Invalid RS - Not Ordered</option>
+<option>Invalid RS - Please Stock</option>
+</select>
+</td>`;
+          } else {
+            html += `<td contenteditable="true" class="px-2 py-1 border border-gray-200 whitespace-pre-wrap">${cell||''}</td>`;
+          }
+        });
+        html += '</tr>';
       });
       html += '</tbody></table>';
-      document.getElementById('preview').innerHTML = html;
+      previewEl.innerHTML = html;
     }
-
-    document.getElementById('inputData').addEventListener('input', renderPreview);
-    document.getElementById('defaultPo').addEventListener('input', renderPreview);
-    document.getElementById('defaultSupplier').addEventListener('change', renderPreview);
-    renderToggleControls();
-
+ 
+    function updateCount() {
+      const raw = document.getElementById('inputData').value;
+      const lines = raw.split("\n").filter(l => l.trim());
+      const orders = new Set();
+      let totalQty = 0;
+      lines.forEach(line => {
+        const cols = line.split("\t");
+        const order = cols[0]?.trim();
+        if (order) orders.add(order);
+        const q = parseFloat(cols[3]);
+        if (!isNaN(q)) totalQty += q;
+      });
+      document.getElementById('totalOrders').textContent = orders.size;
+      document.getElementById('totalQty').textContent = totalQty;
+    }
+ 
     function generateCSV() {
       const table = document.querySelector('#preview table');
       if (!table) return alert('No preview data found.');
       const rows = [headers.filter(h => visibleColumns.has(h))];
       table.querySelectorAll('tbody tr').forEach(tr => {
-        rows.push(Array.from(tr.querySelectorAll('td')).map(td => td.innerText.trim()));
+        rows.push(Array.from(tr.querySelectorAll('td')).map(td => {
+          const sel = td.querySelector('select');
+          return sel ? sel.value.trim() : td.innerText.trim();
+        }));
       });
-      const csv = rows.map(r => r.map(v => `"${v.replace(/"/g,'""')}"`).join(',')).join("\r\n");
+      const csv = rows.map(r => r.map(v => '"' + v.replace(/"/g,'""') + '"').join(',')).join("\r\n");
       const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob), a = document.createElement('a');
       a.href = url;
@@ -129,6 +207,6 @@
       a.click();
       document.body.removeChild(a);
     }
-  </script>
+</script>
 </body>
 </html>
