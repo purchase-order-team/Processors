@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Copy Paste Table</title>
+  <style>
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 8px;
+    }
+    textarea {
+      width: 100%;
+      height: 100px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Copy-Paste Page</h2>
+  <p><strong>Expected Columns:</strong> Batch Number, Order Number, SKU1, SKU2, Qty, (Extra Column if needed)</p>
+  <textarea id="pasteArea" placeholder="Paste your data here with columns: Batch Number, Order Number, SKU1, SKU2, Qty, Extra"></textarea>
+  <button onclick="processData()">Paste and Display</button>
+
+  <h2>Processed Data (4 Columns)</h2>
+  <button onclick="copyTableData()">Copy Processed Data</button>
+  <table id="resultTable">
+    <thead>
+      <tr>
+        <th>Order Number</th>
+        <th>SKU</th>
+        <th>Qty</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <p><strong>Total Qty:</strong> <span id="totalQty">0</span></p>
+  <p><strong>Total Amazon Shipping Orders:</strong> <span id="amazonOrders">0</span></p>
+
+  <script>
+    function detectColumns(headerRow) {
+      const lowerHeader = headerRow.map(col => col.toLowerCase());
+      return {
+        orderIndex: lowerHeader.findIndex(col => col.includes("order number")),
+        skuIndex: lowerHeader.findIndex(col => col.includes("sku1")),
+        qtyIndex: lowerHeader.findIndex(col => col.includes("qty") || col.includes("quantity"))
+      };
+    }
+
+    function processData() {
+      const input = document.getElementById("pasteArea").value.trim();
+      const rows = input.split("\n");
+      const tableBody = document.getElementById("resultTable").querySelector("tbody");
+      const totalQtyEl = document.getElementById("totalQty");
+      const amazonOrdersEl = document.getElementById("amazonOrders");
+      tableBody.innerHTML = "";
+      let totalQty = 0;
+      const seenAmazonOrders = new Set();
+      const amazonOrderMap = new Set();
+      const skuTracker = {};
+      const omittedOrders = new Set();
+
+      if (rows.length === 0) return;
+
+      const headerCells = rows[0].split(/\t|,|\s{2,}/).map(cell => cell.trim());
+      const { orderIndex, skuIndex, qtyIndex } = detectColumns(headerCells);
+      const keywordsToOmit = [
+        "oos", "cancel", "buyer cancelled", "cancelled", "expensive",
+        "buyer", "moved", "move", "mix", "buyer canceled", "buyercanceled", "MIX"
+      ];
+
+      let lastOrderNum = "";
+
+      for (let i = 1; i < rows.length; i++) {
+        const cells = rows[i].split(/\t|,|\s{2,}/).map(cell => cell.trim());
+        const rowText = cells.join(" ").toLowerCase();
+
+        if (cells.length <= Math.max(orderIndex, skuIndex, qtyIndex)) continue;
+
+        let orderNum = cells[orderIndex] || "";
+        const sku = cells[skuIndex] || "";
+        const qty = parseFloat(cells[qtyIndex]) || 0;
+        const isAmazon = rowText.includes("amazon");
+        const shouldOmit = keywordsToOmit.some(keyword => rowText.includes(keyword.toLowerCase()));
+
+        if (orderNum !== "") {
+          lastOrderNum = orderNum;
+        } else {
+          orderNum = lastOrderNum;
+        }
+
+        if (shouldOmit) {
+          if (!skuTracker[orderNum]) skuTracker[orderNum] = new Set();
+          skuTracker[orderNum].add(sku);
+          omittedOrders.add(`${orderNum}||${sku}`);
+          continue;
+        }
+
+        if (!skuTracker[orderNum]) skuTracker[orderNum] = new Set();
+        const isDuplicate = skuTracker[orderNum].has(sku);
+        skuTracker[orderNum].add(sku);
+
+        if (omittedOrders.has(`${orderNum}||${sku}`)) continue;
+
+        if (isAmazon) {
+          amazonOrderMap.add(orderNum);
+        }
+
+        const tr = document.createElement("tr");
+        [orderNum, sku, qty.toString()].forEach(val => {
+          const td = document.createElement("td");
+          td.textContent = val;
+          tr.appendChild(td);
+        });
+
+        const tdNotes = document.createElement("td");
+        let note = "";
+        if (amazonOrderMap.has(orderNum)) note = "Amazon Shipping";
+        if (isDuplicate) note += (note ? ", " : "") + "Duplicate SKU";
+        tdNotes.textContent = note;
+        tr.appendChild(tdNotes);
+
+        tableBody.appendChild(tr);
+        totalQty += qty;
+      }
+
+      totalQtyEl.textContent = totalQty;
+      amazonOrdersEl.textContent = amazonOrderMap.size;
+    }
+
+    function copyTableData() {
+      const table = document.getElementById("resultTable");
+      let text = "";
+      for (let row of table.rows) {
+        let rowData = [];
+        for (let cell of row.cells) {
+          rowData.push(cell.innerText);
+        }
+        text += rowData.join("\t") + "\n";
+      }
+
+      navigator.clipboard.writeText(text).then(() => {
+        alert("Processed data copied to clipboard.");
+      }, () => {
+        alert("Failed to copy data.");
+      });
+    }
+  </script>
+</body>
+</html>

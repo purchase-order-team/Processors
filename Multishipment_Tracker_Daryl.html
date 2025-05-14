@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Multi-Shipment Tracker</title>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<style>
+    .duplicate {
+      background-color: #fbcfe8 !important;
+      color: #be185d !important;
+      font-weight: bold !important;
+    }
+</style>
+<script>
+    const emailByOptions = ['Daryl', 'Hanna', 'Hya', 'Shari', 'Jovs', 'Kath', 'Mary', 'CJ', 'Ariane', 'Mariel', 'Dari', 'Tin', 'Chez', 'Marcus'];
+ 
+    function generateDropdownOptions() {
+      return '<option value=""></option>' + emailByOptions.map(name => `<option value="${name}">${name}</option>`).join('');
+    }
+ 
+    function highlightDuplicates() {
+      const fields = ['orderNumber', 'tracking1', 'tracking2'];
+      fields.forEach(field => {
+        const elements = document.querySelectorAll(`input[name="${field}"]`);
+        const values = {};
+        elements.forEach(el => {
+          el.classList.remove('duplicate');
+          if (el.value) {
+            if (values[el.value]) {
+              values[el.value].forEach(e => e.classList.add('duplicate'));
+              el.classList.add('duplicate');
+            } else {
+              values[el.value] = [el];
+            }
+          }
+        });
+      });
+    }
+ 
+    function generateEmailTemplate(row) {
+      const orderNumber = row.querySelector('[name="orderNumber"]').value;
+      const carrier1 = row.querySelector('[name="carrier1"]').value;
+      const trackingNumber1 = row.querySelector('[name="tracking1"]').value;
+      const carrier2 = row.querySelector('[name="carrier2"]').value;
+      const trackingNumber2 = row.querySelector('[name="tracking2"]').value;
+      const emailedBy = row.querySelector('[name="emailBy"]').value;
+      const action = row.querySelector('[name="actionNeeded"]').value;
+      const emailContainer = document.getElementById('emailMessage');
+ 
+      let emailBody = '';
+ 
+      if (action === 'For Initial Email' && emailedBy) {
+        emailBody = 
+`Hi,
+ 
+Good day! We are reaching out to you to let you know that the parts you have ordered are being fulfilled by different distribution centers. Therefore, please expect your package to arrive in multiple shipments. We will notify you again once we have the complete tracking information available.
+ 
+Regards,
+${emailedBy}`;
+      } else if (action === 'For Final Email' && emailedBy) {
+        emailBody = 
+`Hi,
+ 
+Good day! Your order is on its way. The parts were fulfilled by different distribution centers. Therefore, please expect your package to arrive in multiple shipments. You can track the packages through the following tracking numbers:
+ 
+${carrier1 ? "- " + carrier1 + " : " + trackingNumber1 : ""}
+${carrier2 ? "- " + carrier2 + " : " + trackingNumber2 : ""}
+ 
+If you have any questions, please don't hesitate to contact us.
+ 
+Regards,
+${emailedBy}`;
+      }
+ 
+      emailContainer.value = emailBody;
+    }
+ 
+    function saveData() {
+      const rows = [];
+      const tableRows = document.querySelectorAll('table tbody tr');
+      tableRows.forEach(row => {
+        const rowData = {
+          orderNumber: row.querySelector('[name="orderNumber"]').value,
+          sku: row.querySelector('[name="sku"]').value,
+          datePosted: row.querySelector('[name="datePosted"]').value,
+          postedBy: row.querySelector('[name="postedBy"]').value,
+          carrier1: row.querySelector('[name="carrier1"]').value,
+          tracking1: row.querySelector('[name="tracking1"]').value,
+          carrier2: row.querySelector('[name="carrier2"]').value,
+          tracking2: row.querySelector('[name="tracking2"]').value,
+          actionNeeded: row.querySelector('[name="actionNeeded"]').value,
+          emailBy: row.querySelector('[name="emailBy"]').value,
+          notes: row.querySelector('[name="notes"]').value,
+        };
+        rows.push(rowData);
+      });
+      localStorage.setItem('shipmentRows', JSON.stringify(rows));
+    }
+ 
+    function loadSavedData() {
+      const savedRows = JSON.parse(localStorage.getItem('shipmentRows')) || [];
+      savedRows.forEach(data => {
+        addRow(data);
+      });
+    }
+ 
+    function addRow(savedData = {}) {
+      const table = document.querySelector('table tbody');
+      const row = document.createElement('tr');
+      row.innerHTML = `
+<td class="border px-2 py-1"><input type="text" name="orderNumber" class="w-full border-none outline-none" value="${savedData.orderNumber || ''}"></td>
+<td class="border px-2 py-1"><input type="text" name="sku" class="w-full border-none outline-none" value="${savedData.sku || ''}"></td>
+<td class="border px-2 py-1"><input type="date" name="datePosted" class="w-full border-none outline-none" value="${savedData.datePosted || ''}"></td>
+<td class="border px-2 py-1"><select name="postedBy" class="w-full border-none outline-none">${generateDropdownOptions()}</select></td>
+<td class="border px-2 py-1"><select name="carrier1" class="w-full border-none outline-none"><option value=""></option><option>UPS</option><option>USPS</option><option>AMZL</option><option>FedEx</option><option>OnTrac</option></select></td>
+<td class="border px-2 py-1"><input type="text" name="tracking1" class="w-full border-none outline-none" value="${savedData.tracking1 || ''}"></td>
+<td class="border px-2 py-1"><select name="carrier2" class="w-full border-none outline-none"><option value=""></option><option>UPS</option><option>USPS</option><option>AMZL</option><option>FedEx</option><option>OnTrac</option></select></td>
+<td class="border px-2 py-1"><input type="text" name="tracking2" class="w-full border-none outline-none" value="${savedData.tracking2 || ''}"></td>
+<td class="border px-2 py-1"><select name="actionNeeded" class="w-full border-none outline-none"><option value=""></option><option>For Initial Email</option><option>For Final Email</option></select></td>
+<td class="border px-2 py-1"><select name="emailBy" class="w-full border-none outline-none">${generateDropdownOptions()}</select></td>
+<td class="border px-2 py-1"><input type="text" name="notes" class="w-full border-none outline-none" value="${savedData.notes || ''}"></td>
+<td class="border px-2 py-1"><button onclick="if(confirm('Are you sure you want to delete this row?')) { this.closest('tr').remove(); saveData(); } highlightDuplicates();" class="text-red-500">✖</button></td>
+      `;
+      table.appendChild(row);
+      row.addEventListener('input', () => {
+        highlightDuplicates();
+        saveData();
+        generateEmailTemplate(row);
+      });
+    }
+ 
+    window.onload = function () {
+      loadSavedData();
+    }
+ 
+  </script>
+</head>
+<body>
+<div class="max-w-full mx-auto p-6">
+<h1 class="text-3xl font-bold mb-6">Multi-Shipment Tracker</h1>
+<button onclick="addRow()" class="bg-green-500 text-white px-4 py-2 rounded-md shadow hover:bg-green-600 mb-4">Add Row</button>
+<table class="table-auto w-full border">
+<thead>
+<tr>
+<th class="border px-4 py-2">Order Number</th>
+<th class="border px-4 py-2">SKU</th>
+<th class="border px-4 py-2">Date Posted</th>
+<th class="border px-4 py-2">Posted By</th>
+<th class="border px-4 py-2">Carrier 1</th>
+<th class="border px-4 py-2">Tracking Number 1</th>
+<th class="border px-4 py-2">Carrier 2</th>
+<th class="border px-4 py-2">Tracking Number 2</th>
+<th class="border px-4 py-2">Action Needed</th>
+<th class="border px-4 py-2">Emailed By</th>
+<th class="border px-4 py-2">Notes</th>
+<th class="border px-4 py-2">Delete</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+<textarea id="emailMessage" rows="6" class="w-full p-3 border rounded-md outline-none resize-none mb-4" placeholder="Email template will appear here..."></textarea>
+<button onclick="navigator.clipboard.writeText(document.getElementById('emailMessage').value)" class="bg-blue-500 text-white px-4 py-2 rounded-md shadow hover:bg-blue-600">Copy Email Template</button>
+</div>
+</body>
+</html>
