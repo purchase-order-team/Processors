@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Supplier Inventory Cleaner</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(to bottom right, #d0e4c1, #f8f8f8);
+      background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 29px,
+        #e0e0e0 30px
+      ), repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 59px,
+        #e0e0e0 60px
+      );
+      background-size: cover;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 30px 40px;
+      width: 480px;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #1d6f42;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+
+    input[type="file"] {
+      display: block;
+      margin: 10px auto 20px;
+      padding: 8px;
+      border: 1px solid #aaa;
+      border-radius: 5px;
+      background: #f9f9f9;
+      width: 100%;
+    }
+
+    .button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 12px;
+      font-size: 14px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s ease;
+    }
+
+    .button:disabled {
+      background-color: #ccc;
+      color: #888;
+      cursor: not-allowed;
+    }
+
+    .primary { background: #28a745; color: white; }
+    .primary:hover { background: #218838; }
+
+    .warning { background: #ffc107; color: black; }
+    .warning:hover { background: #e0a800; }
+
+    .danger { background: #dc3545; color: white; }
+    .danger:hover { background: #bd2130; }
+
+    #loading {
+      display: none;
+      text-align: center;
+      margin-top: 15px;
+    }
+
+    #loading svg {
+      width: 30px;
+      height: 30px;
+      fill: #333;
+      animation: spin 1.5s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    #notification {
+      margin-top: 15px;
+      text-align: center;
+      font-weight: bold;
+      color: #1d6f42;
+    }
+
+    .footer {
+      position: fixed;
+      bottom: 10px;
+      right: 20px;
+      font-size: 12px;
+      opacity: 0.3;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Supplier Inventory Cleaner</h2>
+
+  <input type="file" id="fileInput" accept=".xlsx,.xls" />
+
+  <button id="generateUpdateOnlyBtn" class="button warning" disabled>Generate UpdateOnly File</button>
+  <button id="downloadUpdateOnlyBtn" class="button primary" disabled>Download UpdateOnly File</button>
+
+  <button id="removeDuplicatesBtn" class="button warning" disabled>Remove Duplicates (KSI_no)</button>
+  <button id="removeZeroQtyBtn" class="button warning" disabled>Remove "0" Qty (qty)</button>
+  <button id="downloadFinalBtn" class="button primary" disabled>Download Final Cleaned File</button>
+
+  <button id="clearBtn" class="button danger">Clear</button>
+
+  <div id="loading">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M6 2v2h1v3c0 1.38.56 2.63 1.46 3.54l.88.88-.88.88A5.007 5.007 0 0 0 7 17v3H6v2h12v-2h-1v-3a5.007 5.007 0 0 0-1.46-3.54l-.88-.88.88-.88A5.007 5.007 0 0 0 17 7V4h1V2H6zm9 2v3c0 .83-.33 1.58-.88 2.12L12 10.24 9.88 9.12A2.99 2.99 0 0 1 9 7V4h6zm-6 14v-3c0-.83.33-1.58.88-2.12L12 13.76l2.12 1.12c.55.55.88 1.3.88 2.12v3H9z"/>
+    </svg>
+  </div>
+
+  <div id="notification"></div>
+</div>
+
+<div class="footer">Created by CJ P</div>
+
+<script>
+  let originalData = [];
+  let updateOnlyData = [];
+  let finalCleanedData = [];
+  let headers = [];
+  let workbook;
+
+  const loading = document.getElementById('loading');
+  const notify = (msg) => {
+    document.getElementById('notification').innerText = msg;
+    loading.style.display = 'none';
+  };
+
+  document.getElementById('fileInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const data = evt.target.result;
+      workbook = XLSX.read(data, { type: 'binary' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      originalData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+      headers = originalData[0];
+
+      document.getElementById('generateUpdateOnlyBtn').disabled = false;
+      notify("File loaded. Ready to generate UpdateOnly file.");
+    };
+    reader.readAsBinaryString(file);
+  });
+
+  document.getElementById('generateUpdateOnlyBtn').addEventListener('click', () => {
+    loading.style.display = 'block';
+    setTimeout(() => {
+      updateOnlyData = originalData.map(row => {
+        const newRow = [...row];
+        newRow.splice(10, 1); // Remove column K (index 10)
+        return newRow;
+      });
+
+      notify("UpdateOnly file generated (Column K removed). You can now download it.");
+      document.getElementById('downloadUpdateOnlyBtn').disabled = false;
+      document.getElementById('removeDuplicatesBtn').disabled = false;
+    }, 500);
+  });
+
+  document.getElementById('downloadUpdateOnlyBtn').addEventListener('click', () => {
+    loading.style.display = 'block';
+    setTimeout(() => {
+      const sheet = XLSX.utils.aoa_to_sheet(updateOnlyData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, sheet, "UpdateOnly");
+      XLSX.writeFile(wb, "UpdateOnly_Cleaned_File.xlsx");
+      notify("UpdateOnly file downloaded.");
+    }, 300);
+  });
+
+  document.getElementById('removeDuplicatesBtn').addEventListener('click', () => {
+    loading.style.display = 'block';
+    setTimeout(() => {
+      const ksiIndex = updateOnlyData[0].indexOf("KSI_no");
+      if (ksiIndex === -1) return notify('Column "KSI_no" not found.');
+
+      const seen = new Set();
+      const filtered = [updateOnlyData[0]];
+
+      for (let i = 1; i < updateOnlyData.length; i++) {
+        const row = updateOnlyData[i];
+        const key = row[ksiIndex];
+        if (!seen.has(key)) {
+          seen.add(key);
+          filtered.push(row);
+        }
+      }
+
+      finalCleanedData = filtered;
+      notify("Duplicates removed from 'KSI_no'. You may now remove 0 qty.");
+      document.getElementById('removeZeroQtyBtn').disabled = false;
+    }, 500);
+  });
+
+  document.getElementById('removeZeroQtyBtn').addEventListener('click', () => {
+    loading.style.display = 'block';
+    setTimeout(() => {
+      const qtyIndex = finalCleanedData[0].indexOf("qty");
+      if (qtyIndex === -1) return notify('Column "qty" not found.');
+
+      finalCleanedData = finalCleanedData.filter((row, idx) => {
+        if (idx === 0) return true;
+        return row[qtyIndex] !== 0 && row[qtyIndex] !== "0";
+      });
+
+      notify("Rows with 0 qty removed. Ready to download final cleaned file.");
+      document.getElementById('downloadFinalBtn').disabled = false;
+    }, 500);
+  });
+
+  document.getElementById('downloadFinalBtn').addEventListener('click', () => {
+    loading.style.display = 'block';
+    setTimeout(() => {
+      const sheet = XLSX.utils.aoa_to_sheet(finalCleanedData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, sheet, "FinalCleaned");
+      XLSX.writeFile(wb, "Final_Cleaned_Inventory.xlsx");
+      notify("Final cleaned file downloaded.");
+    }, 300);
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    originalData = [];
+    updateOnlyData = [];
+    finalCleanedData = [];
+    workbook = null;
+    document.getElementById('fileInput').value = '';
+    ["generateUpdateOnlyBtn", "downloadUpdateOnlyBtn", "removeDuplicatesBtn", "removeZeroQtyBtn", "downloadFinalBtn"]
+      .forEach(id => document.getElementById(id).disabled = true);
+    document.getElementById('notification').innerText = '';
+    loading.style.display = 'none';
+  });
+</script>
+
+</body>
+</html>
