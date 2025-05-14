@@ -2,22 +2,31 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DEPO & KSI ORDERING FILE GENERATOR</title>
-  <!-- Tailwind CSS -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ordering File Generator</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- SheetJS for Excel export -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
   <style>
     td[contenteditable="true"] { background-color: #fffbe6; }
+    th.sortable { cursor: pointer; }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 p-6">
   <div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
-    <h1 class="text-2xl font-bold mb-4 text-center">DEPO & KSI ORDERING FILE GENERATOR</h1>
-    <div class="mb-4">
-      <label class="block font-medium mb-2">Select CSV/TSV Files:</label>
-      <input id="fileInput" type="file" multiple accept=".csv,.tsv" />
+    <div class="flex justify-between items-center mb-4">
+      <h1 class="text-2xl font-bold">Ordering File Generator</h1>
+      <div class="text-sm italic text-gray-600">By: Marcus Bañez</div>
+    </div>
+    <div class="mb-4 flex flex-wrap gap-4">
+      <div>
+        <label class="block font-medium mb-2">Select CSV/TSV Files:</label>
+        <input id="fileInput" type="file" multiple accept=".csv,.tsv" class="border p-2 rounded" />
+      </div>
+      <div class="flex-1">
+        <label class="block font-medium mb-2">Search Rows:</label>
+        <input id="searchInput" type="text" placeholder="Filter by any term..." class="w-full border p-2 rounded" />
+      </div>
     </div>
     <div id="toggleControls" class="mb-4 hidden">
       <p class="font-medium mb-2">Toggle Columns:</p>
@@ -26,134 +35,216 @@
     <div id="preview" class="overflow-x-auto bg-white p-3 rounded shadow-inner">
       <p class="text-gray-500">No data loaded.</p>
     </div>
-    <div class="mt-4">
+    <div class="mt-4 text-center space-x-2">
       <button id="downloadBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Download Files</button>
+      <button id="resetBtn" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">Reset</button>
     </div>
   </div>
 
   <script>
-    if (typeof XLSX === 'undefined') console.error('XLSX library failed to load.');
-
-    const defaultVisible = ['PO Number', 'SKU1', 'Qty'];
-    let headers = [], filesData = [], visibleColumns = new Set();
-
-    function cleanCell(cell) {
-      let c = cell.trim();
-      if (c.startsWith('"') && c.endsWith('"')) c = c.slice(1, -1);
-      return c.replace(/^KSI-/i, '');
+    // CSV download helper with UTF-8 BOM
+    function downloadCSV(csvContent, fileName) {
+      const bom = '\uFEFF';
+      const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName;
+      link.click();
     }
 
-    document.getElementById('fileInput').addEventListener('change', handleFiles);
-    document.getElementById('downloadBtn').addEventListener('click', exportFiles);
+    const defaultVisible = ['PO Number','SKU1','Qty'];
+    const state = {
+      headers: [],
+      filesData: [],
+      visibleColumns: new Set(),
+      searchTerm: '',
+      sort: { column: null, asc: true }
+    };
+
+    const fileInput = document.getElementById('fileInput');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const searchInput = document.getElementById('searchInput');
+
+    fileInput.addEventListener('change', handleFiles);
+    downloadBtn.addEventListener('click', exportFiles);
+    resetBtn.addEventListener('click', resetApp);
+    searchInput.addEventListener('input', e => { state.searchTerm = e.target.value; renderPreview(); });
+
+    function cleanCell(cell) {
+      let c = (cell||'').trim();
+      if (c.startsWith('"') && c.endsWith('"')) c = c.slice(1,-1);
+      return c.replace(/^KSI-/i,'');
+    }
 
     function handleFiles(e) {
       const files = Array.from(e.target.files);
-      Promise.all(files.map(file => new Promise((res, rej) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const rawLines = reader.result.split(/\r?\n/).filter(l => l.trim() !== '');
-          const rows = rawLines.map(line =>
-            (line.includes('\t') ? line.split('\t') : line.split(',')).map(cleanCell)
-          );
-          res({ name: file.name, rows });
-        };
-        reader.onerror = () => rej(reader.error);
-        reader.readAsText(file);
-      }))).then(results => {
-        headers = results[0].rows[0] || [];
-        filesData = results.map(f => ({ name: f.name, rows: f.rows.slice(1) }));
-        visibleColumns = new Set(headers.filter(h => defaultVisible.includes(h)));
+      Promise.all(files.map(f => parseFile(f))).then(results => {
+        state.headers = results[0].data.meta.fields.map(cleanCell);
+        state.filesData = results.map(({name,data}) => ({
+          name,
+          rows: data.data.map(row => state.headers.map(h => cleanCell(row[h]||'')))
+        }));
+        state.visibleColumns = new Set(state.headers.filter(h => defaultVisible.includes(h)));
         renderToggles();
         renderPreview();
-      }).catch(err => alert('Error reading files: ' + err));
+      }).catch(err => alert('Error parsing files: ' + err));
+    }
+
+    function parseFile(file) {
+      return new Promise((res, rej) => {
+        Papa.parse(file, {
+          header: true,
+          skipEmptyLines: 'greedy',
+          complete: r => res({ name: file.name, data: r }),
+          error: e => rej(e)
+        });
+      });
     }
 
     function renderToggles() {
-      const container = document.getElementById('toggleControls');
-      const grid = container.querySelector('div');
+      const grid = document.querySelector('#toggleControls div');
       grid.innerHTML = '';
-      headers.forEach(h => {
+      state.headers.forEach(h => {
         const label = document.createElement('label');
         label.className = 'flex items-center gap-2 p-1 border rounded hover:bg-gray-50';
         const cb = document.createElement('input');
         cb.type = 'checkbox';
-        cb.checked = visibleColumns.has(h);
+        cb.checked = state.visibleColumns.has(h);
         cb.addEventListener('change', () => {
-          cb.checked ? visibleColumns.add(h) : visibleColumns.delete(h);
+          cb.checked ? state.visibleColumns.add(h) : state.visibleColumns.delete(h);
           renderPreview();
         });
         label.append(cb, document.createTextNode(h));
         grid.appendChild(label);
       });
-      container.classList.remove('hidden');
+      document.getElementById('toggleControls').classList.remove('hidden');
     }
 
     function renderPreview() {
       const preview = document.getElementById('preview');
-      const allRows = filesData.flatMap(f => f.rows);
-      if (!headers.length || !allRows.length) {
-        preview.innerHTML = '<p class="text-gray-500">No data to preview.</p>';
+      const allRows = state.filesData.flatMap(f => f.rows);
+      if (!state.headers.length || !allRows.length) {
+        preview.innerHTML = '<p class="text-gray-500">No data loaded.</p>';
         return;
       }
-      let html = '<table class="min-w-full border-collapse text-sm"><thead><tr>';
-      headers.forEach(h => {
-        if (visibleColumns.has(h)) html += `<th class="border px-2 py-1 bg-gray-200">${h}</th>`;
+      let filtered = allRows.filter(r =>
+        !state.searchTerm || r.some(c => c.toLowerCase().includes(state.searchTerm.toLowerCase()))
+      );
+      if (state.sort.column) {
+        const idx = state.headers.indexOf(state.sort.column);
+        filtered.sort((a, b) => a[idx] < b[idx] ? (state.sort.asc ? -1 : 1) : a[idx] > b[idx] ? (state.sort.asc ? 1 : -1) : 0);
+      }
+      const table = document.createElement('table');
+      table.className = 'min-w-full border-collapse text-sm';
+      const thead = document.createElement('thead');
+      const headRow = document.createElement('tr');
+      state.headers.forEach(h => {
+        if (state.visibleColumns.has(h)) {
+          const th = document.createElement('th');
+          th.className = 'border px-2 py-1 bg-gray-200 sortable';
+          th.textContent = h;
+          th.addEventListener('click', () => {
+            state.sort.asc = state.sort.column === h ? !state.sort.asc : true;
+            state.sort.column = h;
+            renderPreview();
+          });
+          headRow.appendChild(th);
+        }
       });
-      html += '</tr></thead><tbody>';
-      allRows.forEach(row => {
-        html += '<tr>';
-        row.forEach((cell, i) => {
-          if (visibleColumns.has(headers[i])) {
-            html += `<td contenteditable="true" class="border px-2 py-1 whitespace-pre-wrap">${cell}</td>`;
+      thead.appendChild(headRow);
+      table.appendChild(thead);
+      const tbody = document.createElement('tbody');
+      filtered.forEach(r => {
+        const tr = document.createElement('tr');
+        state.headers.forEach((h, i) => {
+          if (state.visibleColumns.has(h)) {
+            const td = document.createElement('td');
+            td.contentEditable = 'true';
+            td.className = 'border px-2 py-1 whitespace-pre-wrap';
+            td.textContent = r[i];
+            tr.appendChild(td);
           }
         });
-        html += '</tr>';
+        tbody.appendChild(tr);
       });
-      html += '</tbody></table>';
-      preview.innerHTML = html;
+      table.appendChild(tbody);
+      preview.innerHTML = '';
+      preview.appendChild(table);
+    }
+
+    function resetApp() {
+      fileInput.value = '';
+      searchInput.value = '';
+      state.headers = [];
+      state.filesData = [];
+      state.visibleColumns.clear();
+      state.searchTerm = '';
+      state.sort = { column: null, asc: true };
+      document.getElementById('toggleControls').classList.add('hidden');
+      document.getElementById('preview').innerHTML = '<p class="text-gray-500">No data loaded.</p>';
     }
 
     function exportFiles() {
-      if (!headers.length) return alert('No data to export.');
-      filesData.forEach(f => {
+      if (!state.headers.length) return alert('No data to export.');
+      state.filesData.forEach(f => {
         const base = f.name.replace(/\.[^/.]+$/, '');
-        const cols = headers.filter(h => visibleColumns.has(h));
-        const filtered = f.rows.map(r => cols.map(h => r[headers.indexOf(h)] || ''));
+        const prefix = base.split('-')[0];
+        const code = prefix.slice(-1).toUpperCase();
 
-        if (f.name.includes('D-') && typeof XLSX !== 'undefined') {
+        if (code === 'D') {
+          // D: include data + pivot XLSX
           const wb = XLSX.utils.book_new();
-          const wsData = XLSX.utils.aoa_to_sheet([cols, ...filtered]);
-          XLSX.utils.book_append_sheet(wb, wsData, base);
-
-          const skuIdx = headers.indexOf('SKU1');
-          const qtyIdx = headers.indexOf('Qty');
+          const cols = state.headers.filter(h => state.visibleColumns.has(h));
+          const dataRows = f.rows
+            .filter(r => parseFloat(r[state.headers.indexOf('Qty')]) > 0)
+            .map(r => cols.map(h => r[state.headers.indexOf(h)] || ''));
+          XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([cols, ...dataRows]), base);
           const totals = {};
-          f.rows.forEach(r => {
-            const sku = r[skuIdx];
-            const qty = parseFloat(r[qtyIdx]) || 0;
-            totals[sku] = (totals[sku] || 0) + qty;
+          dataRows.forEach(r => {
+            const sku = r[cols.indexOf('SKU1')];
+            const q = parseFloat(r[cols.indexOf('Qty')]) || 0;
+            totals[sku] = (totals[sku] || 0) + q;
           });
-          const pivotArr = [['Row Labels', 'Sum of Qty']];
-          let grandTotal = 0;
-          Object.entries(totals).forEach(([sku, sum]) => {
-            pivotArr.push([sku, sum]);
-            grandTotal += sum;
+          const pivot = [['Row Labels','Sum of Qty']];
+          let gt = 0;
+          Object.entries(totals).forEach(([sku,sum]) => {
+            pivot.push([sku,sum]); gt += sum;
           });
-          pivotArr.push(['Grand Total', grandTotal]);
-          const wsPivot = XLSX.utils.aoa_to_sheet(pivotArr);
-          XLSX.utils.book_append_sheet(wb, wsPivot, 'Pivot');
-
+          pivot.push(['Grand Total',gt]);
+          XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(pivot), 'Pivot');
           XLSX.writeFile(wb, `${base}.xlsx`);
+        } else if (code === 'G') {
+          // G: split into 50-item CSV UTF-8 batches
+          const skuIdx = state.headers.indexOf('SKU1');
+          const qtyIdx = state.headers.indexOf('Qty');
+          const rows = f.rows.filter(r => parseFloat(r[qtyIdx]) > 0)
+                             .map(r => [r[skuIdx], r[qtyIdx]]);
+          const batchSize = 50;
+          const totalBatches = Math.ceil(rows.length / batchSize) || 1;
+          for (let i = 0; i < totalBatches; i++) {
+            const chunk = rows.slice(i * batchSize, (i + 1) * batchSize);
+            const sheetArr = [['PartNumber','Qty'], ...chunk];
+            const ws = XLSX.utils.aoa_to_sheet(sheetArr);
+            const csv = XLSX.utils.sheet_to_csv(ws);
+            // letter suffix A, B, C...
+            const letter = String.fromCharCode(65 + i);
+            const filename = rows.length > batchSize
+              ? `${base}${letter}.csv`
+              : `${base}.csv`;
+            downloadCSV(csv, filename);
+          }
         } else {
-          const csv = [cols, ...filtered].map(r => r.join(',')).join('\r\n');
-          const blob = new Blob(["﻿" + csv], { type: 'text/csv;charset=utf-8;' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${base}.csv`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
+          // K and others: data-only CSV UTF-8
+          const cols = state.headers.filter(h => state.visibleColumns.has(h));
+          const sheetArr = [cols];
+          f.rows.forEach(r => {
+            const q = parseFloat(r[state.headers.indexOf('Qty')]) || 0;
+            if (q > 0) sheetArr.push(cols.map(h => r[state.headers.indexOf(h)] || ''));
+          });
+          const ws = XLSX.utils.aoa_to_sheet(sheetArr);
+          const csv = XLSX.utils.sheet_to_csv(ws);
+          downloadCSV(csv, `${base}.csv`);
         }
       });
     }
