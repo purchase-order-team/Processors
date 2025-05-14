@@ -7,57 +7,45 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root { --primary-color:#24305E; --primary-hover:#374785; --background:#F8F9FA; --card-bg:#FFFFFF; --text-color:#2C3E50; --spacing:1.5rem; --radius:0.5rem; --transition:0.3s; }
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:'Inter',sans-serif;background:var(--background);color:var(--text-color);display:flex;flex-direction:column;min-height:100vh;}
-    #welcome-modal{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;}
-    .modal-content{background:#fff;padding:var(--spacing);border-radius:var(--radius);max-width:400px;text-align:center;box-shadow:0 4px 8px rgba(0,0,0,0.2);}
-    .modal-content h2{color:var(--primary-color);margin-bottom:1rem;}
-    .modal-content p{color:#555;margin-bottom:1.5rem;}
-    .modal-content button{background:var(--primary-color);color:#fff;border:none;padding:0.5rem 1rem;border-radius:var(--radius);cursor:pointer;}
-    header{background:#fff;padding:calc(var(--spacing)*1.5) var(--spacing);text-align:center;box-shadow:0 2px 4px rgba(0,0,0,0.1);}
-    .header-content img{max-height:20px;margin-bottom:var(--spacing);}
-    .header-content h1{font-size:2.5rem;color:var(--primary-color);}
-    .header-content p{color:#555;margin-top:0.5rem;}
-    #tool-viewer{display:none;flex:1;flex-direction:column;}
-    #tool-viewer iframe{flex:1;border:none;width:100%;height:80vh;}
-    #back-btn{background:var(--primary-color);color:#fff;border:none;padding:0.5rem 1rem;margin:var(--spacing);border-radius:var(--radius);cursor:pointer;align-self:start;}
-    main{flex:1;max-width:1200px;margin:var(--spacing) auto;padding:0 var(--spacing);}
-    .search-container{margin-bottom:var(--spacing);text-align:center;}
-    .search-container select{width:100%;max-width:360px;padding:0.75rem 1rem;border:1px solid #ccc;border-radius:var(--radius);font-size:1rem;transition:border-color var(--transition);}
-    .search-container select:focus{outline:none;border-color:var(--primary-color);box-shadow:0 0 0 3px rgba(36,48,94,0.15);}
-    .projects-container{display:flex;flex-wrap:wrap;justify-content:center;gap:var(--spacing);}
-    .project-card{flex:1 1 calc(50% - var(--spacing));max-width:360px;background:var(--card-bg);border-radius:var(--radius);box-shadow:0 4px 8px rgba(0,0,0,0.05);transition:transform var(--transition),box-shadow var(--transition);position:relative;overflow:hidden;margin:var(--spacing) 0;}
-    .project-card:hover{transform:translateY(-4px);box-shadow:0 8px 16px rgba(0,0,0,0.1);}
-    .owner-toggle{display:block;margin:var(--spacing) auto 0;padding:0.5rem 1rem;background:var(--primary-color);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;transition:background var(--transition);}
-    .owner-toggle:hover{background:var(--primary-hover);}
-    .owner-info{display:none;padding:var(--spacing);background:#f0f4f8;}
-    .owner-photo{width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid var(--primary-color);display:block;margin:0 auto;}
-    .owner-name{text-align:center;margin-top:0.5rem;color:var(--primary-color);font-weight:600;}
-    .project-content{padding:var(--spacing);text-align:left;}
-    .project-content h2{font-size:1.25rem;color:var(--primary-color);margin-bottom:0.5rem;}
-    .project-content p{color:#555;margin-bottom:1rem;font-size:0.95rem;}
-    .view-tool{display:inline-block;text-decoration:none;font-weight:600;color:var(--primary-color);transition:border-color var(--transition);border-bottom:2px solid transparent;cursor:pointer;}
-    .view-tool:hover{border-color:var(--primary-hover);}
-    #tutorial-modal.modal-content { background: #fff; padding: var(--spacing); border-radius: var(--radius); max-width: 800px; width: 90%; position: relative; text-align: center;}
-#tutorial-modal .modal-content { width: 90vw; max-width: 1200px; max-height: 90vh; }
-#tutorial-modal .modal-content iframe { width: 100%; height: 85vh; }
-	  .close-modal { position: absolute; top: 10px; right: 10px; background: var(--primary-color); color: #fff; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-size: 1.2rem; line-height: 30px; text-align: center;}
-	  .tutorial-link { text-decoration: none; font-weight: bold; color: var(--primary-color); float: right; border-bottom: 2px solid transparent; transition: border-color var(--transition-speed);}
-	  .tutorial-link:hover { text-decoration: underline; border-color: var(--primary-hover);}
-	  .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center; z-index: 1000;}
-      #tutorial-modal .modal-content { position: relative; }
-      #tutorial-modal .modal-content { max-height: 95vh; overflow-y: auto; }
-	  #tutorial-modal .close-modal { position: absolute; top: 1rem; left: 1rem; }
-      #tutorial-modal .close-modal {background:var(--primary-color);color:#fff;border:none;border-radius:50%;width:2.5rem;height:2.5rem;display:flex;align-items:center;justify-content:center;position:absolute;top:1rem;right:1rem;font-size:1.2rem;}
-      #tutorial-modal .back-btn { position: absolute; top: 1.5rem; left: var(--spacing); }
-    footer{background:#fff;text-align:center;padding:var(--spacing) 0;color:#777;font-size:0.875rem;border-top:1px solid #eaeaea;}
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Inter',sans-serif; background:var(--background); color:var(--text-color); display:flex; flex-direction:column; min-height:100vh; }
+    #welcome-modal { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000; }
+    .modal-content { background:#fff; padding:var(--spacing); border-radius:var(--radius); max-width:400px; text-align:center; box-shadow:0 4px 8px rgba(0,0,0,0.2); }
+    .modal-content h2 { color:var(--primary-color); margin-bottom:1rem; }
+    .modal-content p { color:#555; margin-bottom:1.5rem; }
+    .modal-content button { background:var(--primary-color); color:#fff; border:none; padding:0.5rem 1rem; border-radius:var(--radius); cursor:pointer; }
+    header { background:#fff; padding:calc(var(--spacing)*1.5) var(--spacing); text-align:center; box-shadow:0 2px 4px rgba(0,0,0,0.1); }
+    .header-content img { max-height:20px; margin-bottom:var(--spacing); }
+    .header-content h1 { font-size:2.5rem; color:var(--primary-color); }
+    .header-content p { color:#555; margin-top:0.5rem; }
+    #tool-viewer { display:none; flex:1; flex-direction:column; }
+    #tool-viewer iframe { flex:1; border:none; width:100%; height:80vh; }
+    #back-btn { background:var(--primary-color); color:#fff; border:none; padding:0.5rem 1rem; margin:var(--spacing); border-radius:var(--radius); cursor:pointer; align-self:start; }
+    main { flex:1; max-width:1200px; margin:var(--spacing) auto; padding:0 var(--spacing); }
+    .search-container { margin-bottom:var(--spacing); text-align:center; }
+    .search-container select { width:100%; max-width:360px; padding:0.75rem 1rem; border:1px solid #ccc; border-radius:var(--radius); font-size:1rem; transition:border-color var(--transition); }
+    .search-container select:focus { outline:none; border-color:var(--primary-color); box-shadow:0 0 0 3px rgba(36,48,94,0.15); }
+    .projects-container { display:flex; flex-wrap:wrap; justify-content:center; gap:var(--spacing); }
+    .project-card { flex:1 1 calc(50% - var(--spacing)); max-width:360px; background:var(--card-bg); border-radius:var(--radius); box-shadow:0 4px 8px rgba(0,0,0,0.05); transition:transform var(--transition), box-shadow var(--transition); position:relative; overflow:hidden; margin:var(--spacing) 0; }
+    .project-card:hover { transform:translateY(-4px); box-shadow:0 8px 16px rgba(0,0,0,0.1); }
+    .owner-toggle { display:block; margin:var(--spacing) auto 0; padding:0.5rem 1rem; background:var(--primary-color); color:#fff; border:none; border-radius:var(--radius); cursor:pointer; transition:background var(--transition); }
+    .owner-toggle:hover { background:var(--primary-hover); }
+    .owner-info { display:none; padding:var(--spacing); background:#f0f4f8; }
+    .owner-photo { width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid var(--primary-color); display:block; margin:0 auto; }
+    .owner-name { text-align:center; margin-top:0.5rem; color:var(--primary-color); font-weight:600; }
+    .project-content { padding:var(--spacing); text-align:left; }
+    .project-content h2 { font-size:1.25rem; color:var(--primary-color); margin-bottom:0.5rem; }
+    .project-content p { color:#555; margin-bottom:1rem; font-size:0.95rem; }
+    .view-tool { display:inline-block; text-decoration:none; font-weight:600; color:var(--primary-color); transition:border-color var(--transition); border-bottom:2px solid transparent; cursor:pointer; }
+    .view-tool:hover { border-color:var(--primary-hover); }
+    footer { background:#fff; text-align:center; padding:var(--spacing) 0; color:#777; font-size:0.875rem; border-top:1px solid #eaeaea; }
   </style>
 </head>
 <body>
   <div id="welcome-modal">
     <div class="modal-content">
       <h2>Welcome!</h2>
-      <p>Here you can explore all the projects created by the PO team.</p>
+      <p>Welcome! Here you can explore all the projects created by the PO team.</p>
       <button id="modal-close">Get Started</button>
     </div>
   </div>
@@ -72,12 +60,6 @@
     <button id="back-btn">← Back to Home</button>
     <iframe id="tool-frame"></iframe>
   </div>
-        <div id="tutorial-modal" class="modal-overlay">
-        <div class="modal-content">
-        <button id="tutorial-back-btn" class="back-btn" onclick="document.getElementById('tutorial-video').src='';document.getElementById('tutorial-modal').style.display='none'">← Back to Projects</button>
-        <iframe id="tutorial-video" src="" allowfullscreen></iframe>
-    </div>
-    </div>
   <main>
     <div class="search-container">
       <select id="search" aria-label="Select project owner">
@@ -89,6 +71,7 @@
         <option value="Jerrilyn Alarma">Jerrilyn Alarma</option>
         <option value="Shari Kristine Torres">Shari Kristine Torres</option>
         <option value="Hannah Ranario">Hannah Ranario</option>
+        <option value="Daricalyn Rosales">Daricalyn Rosales</option>
       </select>
     </div>
     <div id="projects" class="projects-container">
@@ -105,7 +88,6 @@
           <h2>Ordering File Generator</h2>
           <p>Prepares and formats files for seamless NetSuite PO imports.</p>
           <a class="view-tool" data-src="https://purchase-order-team.github.io/Processors/Depo_KSI_FileGenerator_Marcus_Kathleen.html">View Tool &rarr;</a>
-          <a class="tutorial-link" data-video="YOUR_TUTORIAL_VIDEO_URL">View Tutorial &rarr;</a>
         </div>
       </div>
       <!-- NetSuite Importing Tool -->
@@ -121,7 +103,6 @@
           <h2>NetSuite Importing Tool</h2>
           <p>Formats and validates data files for smooth import into NetSuite.</p>
           <a class="view-tool" data-src="https://purchase-order-team.github.io/Processors/NetSuite_Importing_Tool_Marcus_Kathleen.html">View Tool &rarr;</a>
-          <a class="tutorial-link" data-video="YOUR_TUTORIAL_VIDEO_URL">View Tutorial &rarr;</a>
         </div>
       </div>
       <!-- Order Tagging Tool -->
@@ -135,23 +116,21 @@
           <h2>Order Tagging Tool</h2>
           <p>Processes detailed order data to ensure accurate tagging and fulfillment in ShipStation.</p>
           <a class="view-tool" data-src="https://purchase-order-team.github.io/Processors/Order_Tagging_Christine.html">View Tool &rarr;</a>
-          <a class="tutorial-link" data-video="YOUR_TUTORIAL_VIDEO_URL">View Tutorial &rarr;</a>
         </div>
       </div>
       <!-- International Address Sweeping Tool -->
       <div class="project-card" data-title="Marcus Bañez,Kathleen Delos Santos">
         <button class="owner-toggle">Owners</button>
         <div class="owner-info">
-          <img class="owner-photo" src="https://raw.githubusercontent.com/purchase-order-team/processors/main/path/to/photos/test%20avatar.png" alt="Marcus Bañez">
+          <img class="owner-photo" src="https://raw.githubusercontent.com/purchase-order-team/Processors/main/path/to/photos/test%20avatar.png" alt="Marcus Bañez">
           <div class="owner-name">Marcus Bañez</div>
-          <img class="owner-photo" src="https://raw.githubusercontent.com/purchase-order-team/processors/main/path/to/photos/test%20avatar.png" alt="Kathleen Delos Santos">
+          <img class="owner-photo" src="https://raw.githubusercontent.com/purchase-order-team/Processors/main/path/to/photos/test%20avatar.png" alt="Kathleen Delos Santos">
           <div class="owner-name">Kathleen Delos Santos</div>
         </div>
         <div class="project-content">
           <h2>International Address Sweeping Tool</h2>
           <p>Identifies and tracks international shipments to verify proper processing.</p>
           <a class="view-tool" data-src="https://purchase-order-team.github.io/Processors/International_Address_Sweep.html">View Tool &rarr;</a>
-          <a class="tutorial-link" data-video="YOUR_TUTORIAL_VIDEO_URL">View Tutorial &rarr;</a>
         </div>
       </div>
       <!-- PO Scrubbing Tool -->
@@ -165,7 +144,6 @@
           <h2>PO Scrubbing Tool</h2>
           <p>Validates selected SKUs to prevent duplicates and ensure accurate fulfillment.</p>
           <a class="view-tool" data-src="https://purchase-order-team.github.io/Processors/POScrubbing_Mary.html">View Tool &rarr;</a>
-          <a class="tutorial-link" data-video="YOUR_TUTORIAL_VIDEO_URL">View Tutorial &rarr;</a>
         </div>
       </div>
       <!-- Carrier Count Tool -->
@@ -177,9 +155,8 @@
         </div>
         <div class="project-content">
           <h2>Carrier Count Tool</h2>
-          <p>Generates daily summaries of carriers used.</p>
+          <p>Generates daily summaries of carriers used to optimize shipping operations.</p>
           <a class="view-tool" data-src="https://purchase-order-team.github.io/Processors/carrier_count_Jerrilyn.html">View Tool &rarr;</a>
-          <a class="tutorial-link" data-video="YOUR_TUTORIAL_VIDEO_URL">View Tutorial &rarr;</a>
         </div>
       </div>
       <!-- NPM Calculator Tool -->
@@ -195,7 +172,19 @@
           <h2>NPM Calculator</h2>
           <p>Calculates net profit margins per order and flags high shipping costs to inform pricing decisions.</p>
           <a class="view-tool" data-src="https://purchase-order-team.github.io/Processors/NPM_Calc_for_Labelling.html">View Tool &rarr;</a>
-          <a class="tutorial-link" data-video="YOUR_TUTORIAL_VIDEO_URL">View Tutorial &rarr;</a>
+        </div>
+      </div>
+      <!-- Amazon Logistics Count Tool -->
+      <div class="project-card" data-title="Daricalyn Rosales">
+        <button class="owner-toggle">Owners</button>
+        <div class="owner-info">
+          <img class="owner-photo" src="https://raw.githubusercontent.com/purchase-order-team/Processors/main/path/to/photos/test%20avatar.png" alt="Daricalyn Rosales">
+          <div class="owner-name">Daricalyn Rosales</div>
+        </div>
+        <div class="project-content">
+          <h2>Amazon Logistics Count Tool</h2>
+          <p>Summarizes daily orders shipped via Amazon Logistics to streamline performance analysis.</p>
+          <a class="view-tool" data-src="https://purchase-order-team.github.io/Processors/Amazon_Logistics_Count_Dari.html">View Tool &rarr;</a>
         </div>
       </div>
     </div>
@@ -209,10 +198,6 @@
     document.querySelectorAll('.owner-toggle').forEach(btn=>btn.addEventListener('click',()=>{const info=btn.nextElementSibling;info.style.display=info.style.display==='block'?'none':'block';}));
     document.querySelectorAll('.view-tool').forEach(link=>link.addEventListener('click',e=>{e.preventDefault();const src=link.getAttribute('data-src');document.getElementById('tool-frame').src=src;document.querySelector('main').style.display='none';document.getElementById('tool-viewer').style.display='flex';}));
     document.getElementById('back-btn').addEventListener('click',()=>{document.getElementById('tool-viewer').style.display='none';document.querySelector('main').style.display='';document.getElementById('tool-frame').src='';});
-    document.querySelectorAll('.tutorial-link').forEach(l=>l.addEventListener('click',e=>{e.preventDefault();document.getElementById('tutorial-video').src=l.getAttribute('data-video');document.getElementById('tutorial-modal').style.display='flex';}));
-    document.querySelectorAll('.tutorial-link').forEach(l=>l.addEventListener('click',e=>{const t=l.closest('.project-card').querySelector('h2').innerText,mc=document.querySelector('#tutorial-modal .modal-content');mc.querySelector('h2')&&mc.querySelector('h2').remove();mc.insertAdjacentHTML('afterbegin',`<h2 style="margin:0 0 1rem;color:var(--primary-color)">${t}</h2>`);}));
-	  document.querySelector('.close-modal').addEventListener('click',()=>{const m=document.getElementById('tutorial-modal'),f=document.getElementById('tutorial-video');f.src='';m.style.display='none';});
-      
   </script>
 </body>
 </html>
