@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Carrier Count Summary</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f4f6f8;
+      color: #333;
+      position: relative;
+      min-height: 100vh;
+    }
+    h2 {
+      background: #e0f3ff;
+      color: #0077b6;
+      padding: 15px 25px;
+      display: inline-block;
+      border-radius: 8px;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+    }
+    small {
+      font-size: 14px;
+      color: #555;
+    }
+    input[type="file"], button {
+      margin: 15px 0;
+      padding: 10px 15px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #0077b6;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #005f8e;
+    }
+    table {
+      margin-top: 25px;
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      box-shadow: 2px 2px 10px rgba(0,0,0,0.05);
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #0077b6;
+      color: white;
+    }
+    td {
+      background-color: #e0f3ff;
+      font-size: 14px;
+    }
+    .watermark {
+      position: fixed;
+      bottom: 10px;
+      right: 20px;
+      opacity: 0.1;
+      font-size: 60px;
+      color: #0077b6;
+      pointer-events: none;
+      user-select: none;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Carrier Count Summary<br><small id="report-date"></small></h2>
+<br><br>
+
+<input type="file" id="csvFiles" multiple accept=".csv">
+<button onclick="processFiles()">Generate Report</button>
+
+<div id="output"></div>
+<div class="watermark">Jeh</div>
+
+<script>
+const knownCarriers = ['USPS', 'UPS', 'FEDEX', 'ONTRAC', 'Amazon Logistics'];
+
+function mapToRegion(shipFromRaw) {
+  const sf = shipFromRaw.toLowerCase();
+  if (sf.includes('nj') || sf.includes('ny')) return "New Jersey";
+  if (sf.includes('ga') || sf.includes('georgia')) return "Georgia";
+  if (sf.includes('il')) return "Illinois";
+  if (sf.includes('ca') || sf.includes('cali') || sf.includes('california')) return "California";
+  return "Unknown";
+}
+
+function normalizeCarrierFromService(serviceRaw) {
+  const s = serviceRaw.toUpperCase();
+  if (s.includes("AMAZON")) return "Amazon Logistics";
+  if (s.includes("FEDEX")) return "FEDEX";
+  if (s.includes("UPS")) return "UPS";
+  if (s.includes("USPS")) return "USPS";
+  if (s.includes("ONTRAC")) return "ONTRAC";
+  return "Other";
+}
+
+function processFiles() {
+  const files = document.getElementById('csvFiles').files;
+  if (!files.length) return alert("Please select at least one CSV file.");
+
+  let allData = [];
+  let filesProcessed = 0;
+
+  Array.from(files).forEach(file => {
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: function(results) {
+        const rows = results.data;
+        const shipFromKey = Object.keys(rows[0]).find(h => h.toLowerCase().includes("ship from"));
+        const serviceKey = Object.keys(rows[0]).find(h => h.toLowerCase().includes("service"));
+
+        if (!shipFromKey || !serviceKey) {
+          alert(`Missing 'Ship From' or 'Service' column in file: ${file.name}`);
+          return;
+        }
+
+        rows.forEach(row => {
+          const shipFrom = (row[shipFromKey] || "").trim();
+          const service = (row[serviceKey] || "").trim();
+          if (shipFrom && service) {
+            const region = mapToRegion(shipFrom);
+            const carrier = normalizeCarrierFromService(service);
+            allData.push({ region, carrier });
+          }
+        });
+
+        filesProcessed++;
+        if (filesProcessed === files.length) {
+          generateSummaryTable(allData);
+        }
+      }
+    });
+  });
+
+  const today = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  document.getElementById("report-date").textContent = today;
+}
+
+function generateSummaryTable(data) {
+  const regionMap = {};
+
+  data.forEach(({ region, carrier }) => {
+    if (!regionMap[region]) regionMap[region] = {};
+    regionMap[region][carrier] = (regionMap[region][carrier] || 0) + 1;
+  });
+
+  let html = `<table><tr><th>Region</th>`;
+  knownCarriers.forEach(c => html += `<th>${c}</th>`);
+  html += `</tr>`;
+
+  Object.entries(regionMap).forEach(([region, carriers]) => {
+    html += `<tr><td>${region}</td>`;
+    knownCarriers.forEach(carrier => {
+      const count = carriers[carrier] || 0;
+      html += `<td>${count}</td>`;
+    });
+    html += `</tr>`;
+  });
+
+  html += `</table>`;
+  document.getElementById('output').innerHTML = html;
+}
+</script>
+
+</body>
+</html>
