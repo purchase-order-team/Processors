@@ -3,16 +3,63 @@
 <head>
   <meta charset="utf-8">
   <title>PO Scrubbing Processor</title>
+  <!-- Cute font -->
+  <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
-    body { font-family: sans-serif; padding: 20px; font-size: 12px; position: relative; }
-    .watermark { position: absolute; top: 10px; right: 10px; opacity: 0.2; font-size: 12px; }
-    h1 { font-size: 16px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; font-size: 12px; }
-    th, td { border: 1px solid #ccc; padding: 6px; font-size: 12px; }
-    th { background: #eee; }
-    .highlight { background-color: #fdd; }
-    input.order-input { width: 100%; border: none; background: transparent; font: inherit; padding: 0; font-size: 12px; }
+    :root {
+      --pastel-pink: #ffd1dc;
+      --cream: #fffdd0;
+      --highlight-red: #ffcccc;
+      --button-bg: #ffe4e1;
+    }
+    body {
+      font-family: 'Patrick Hand', cursive;
+      padding: 20px;
+      background: var(--pastel-pink);
+      color: #333;
+    }
+    .watermark {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      opacity: 0.2;
+      font-size: 12px;
+    }
+    h1 { font-size: 20px; color: #c0392b; }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 10px;
+      background: var(--cream);
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      font-size: 12px;
+    }
+    th { background: #f9e79f; }
+    .highlight { background-color: var(--highlight-red) !important; }
+    input.order-input {
+      width: 100%; border: none; background: transparent; font: inherit; padding: 0; font-size: 12px;
+    }
+    .btn {
+      background: var(--button-bg);
+      border: none;
+      padding: 8px 12px;
+      margin-right: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      border-radius: 12px;
+      box-shadow: 1px 1px 4px rgba(0,0,0,0.2);
+      cursor: pointer;
+    }
+    #totalQty {
+      margin-top: 20px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #c0392b;
+    }
   </style>
 </head>
 <body>
@@ -22,179 +69,148 @@
     <label>Select your Excel files:
       <input type="file" id="fileInput" accept=".xls,.xlsx" multiple />
     </label>
-    <button id="copyBtn">Copy Data</button>
+    <button id="copyBtn" class="btn">Copy Data</button>
+    <button id="exportBtn" class="btn">Export File</button>
   </p>
   <div>
     <h2>Mixed Order Numbers</h2>
     <textarea id="mixOrdersBox" rows="3" style="width:100%;" readonly></textarea>
   </div>
+  <div id="totalQty"></div>
   <div id="output"></div>
 
   <script>
-    // Desired import order (without extension)
     const desiredOrder = ['CL250510ALL-NJ-1','CL250510ALL-CA-1','CL250510ALL-GA-1','CL250510ALL-IL-1'];
-
-    const getWarehouse = s => {
-      const w = s && s.split('_').pop();
-      return ['NJ','CA','GA','IL'].includes(w) ? w : null;
-    };
-    const supplierCode = {
-      'CARPARTS360_NJ':'1','CARPARTS360_CA':'K','CARPARTS360_GA':'M','CARPARTS360_IL':'C',
-      'DEPO':'D','TYC':'G','EAGLE':'E','KSI':'K'
-    };
+    const getWarehouse = s => { const w = s && s.split('_').pop(); return ['NJ','CA','GA','IL'].includes(w) ? w : null; };
+    const supplierCode = { 'CARPARTS360_NJ':'1','CARPARTS360_CA':'K','CARPARTS360_GA':'M','CARPARTS360_IL':'C','DEPO':'D','TYC':'G','EAGLE':'E','KSI':'K' };
     const getSupplierCode = s => supplierCode[s] || supplierCode[s.split('_')[0]] || '';
 
-    document.getElementById('fileInput').addEventListener('change', e => {
-      let files = Array.from(e.target.files);
-      // Enforce specific file order
-      files.sort((a,b) => {
-        const an = a.name.replace(/\.[^/.]+$/, '');
-        const bn = b.name.replace(/\.[^/.]+$/, '');
+    function processFiles(files) {
+      files.sort((a, b) => {
+        const an = a.name.replace(/\.[^/.]+$/, ''), bn = b.name.replace(/\.[^/.]+$/, '');
         return desiredOrder.indexOf(an) - desiredOrder.indexOf(bn);
       });
-
-      const filePromises = [];
-      let globalIdx = 0;
-
-      files.forEach((file, fIdx) => {
-        filePromises.push(new Promise((res, rej) => {
-          const reader = new FileReader();
-          reader.onload = evt => {
-            const dataArr = new Uint8Array(evt.target.result);
-            const wb = XLSX.read(dataArr, { type: 'array' });
-            const ws = wb.Sheets[wb.SheetNames[0]];
-            const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-            const headers = raw[0] || [];
-            let rows = raw.slice(1);
-            // Robust sort: Column A (0), C (2), H (7), case-insensitive
-            rows.sort((r1, r2) => {
-              for (const idx of [0,2,7]) {
-                const v1 = String(r1[idx] || '').toLowerCase().trim();
-                const v2 = String(r2[idx] || '').toLowerCase().trim();
-                if (v1 < v2) return -1;
-                if (v1 > v2) return 1;
-              }
-              return 0;
-            });
-            const data = rows.map(r => {
-              const obj = {};
-              headers.forEach((h,i) => obj[h] = r[i] || '');
-              obj._fileIdx = fIdx;
-              obj._idx = globalIdx++;
-              obj._origOrder = obj['Order Number'] || '';
-              return obj;
-            });
-            res(data);
-          };
-          reader.readAsArrayBuffer(file);
-        }));
-      });
-
-      Promise.all(filePromises).then(results => {
-        // Combine with blank rows between files
-        let combined = [];
-        results.forEach((dataArr, i) => {
-          if (i > 0) combined.push({ _blank: true });
-          combined = combined.concat(dataArr);
-        });
-
-        // Group rows by original order number
-        const grouped = {};
-        combined.filter(r => !r._blank).forEach(r => {
-          grouped[r._origOrder] = grouped[r._origOrder] || [];
-          grouped[r._origOrder].push(r);
-        });
-
-        // Build suffixMap (MIX/MM)
-        const suffixMap = {};
-        Object.entries(grouped).forEach(([ord, rows]) => {
-          const wares = new Set(rows.map(r => getWarehouse(r.Supplier)).filter(Boolean));
-          const sups = Array.from(new Set(rows.map(r => getSupplierCode(r.Supplier)).filter(Boolean)));
-          let suf = '';
-          if (rows.length >= 3 && wares.size === 1 && sups.length === 1) {
-            suf = '-MM' + rows.length;
-          } else if (wares.size > 1) {
-            suf = '-MIX' + Array.from(wares).join('/');
-          } else if (wares.size === 1 && sups.length > 1) {
-            suf = '-MIX' + sups.join('');
-          }
-          suffixMap[ord] = suf;
-        });
-
-        // Determine blanks: only blank second entry if NOT a MIX group
-        const toRemove = new Set();
-        const toBlank = new Set();
-        Object.entries(grouped).forEach(([ord, rows]) => {
-          if (rows.length === 2) {
-            const suf = suffixMap[ord] || '';
-            if (!suf.includes('-MIX')) {
-              toBlank.add(rows[1]._idx);
+      const promises = files.map((file, fIdx) => new Promise(res => {
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+          const headers = raw[0] || [];
+          const rows = raw.slice(1).sort((r1, r2) => {
+            for (const idx of [0,2,7]) {
+              const v1 = String(r1[idx] || '').toLowerCase(), v2 = String(r2[idx] || '').toLowerCase();
+              if (v1 < v2) return -1;
+              if (v1 > v2) return 1;
             }
-          }
+            return 0;
+          });
+          res({ headers, rows, fIdx });
+        };
+        reader.readAsArrayBuffer(file);
+      }));
+
+      Promise.all(promises).then(results => {
+        let combinedData = [];
+        let idxCounter = 0;
+        results.forEach(({ headers, rows }, i) => {
+          if (i > 0) combinedData.push({ _blank: true });
+          rows.forEach(r => {
+            const obj = {};
+            headers.forEach((h, j) => obj[h] = r[j] || '');
+            obj._origOrder = obj['Order Number'] || '';
+            obj._idx = idxCounter++;
+            obj._fileIdx = i;
+            combinedData.push(obj);
+          });
         });
 
-        // Assemble final rows
-        const finalRows = combined.reduce((acc, r) => {
-          if (r._blank) { acc.push(r); return acc; }
-          if (toRemove.has(r._idx)) return acc;
+        const grouped = {};
+        combinedData.filter(r => !r._blank).forEach(r => {
+          (grouped[r._origOrder] = grouped[r._origOrder] || []).push(r);
+        });
+        const suffixMap = {};
+        Object.entries(grouped).forEach(([ord, arr]) => {
+          const wares = new Set(arr.map(r => getWarehouse(r.Supplier)).filter(Boolean));
+          const sups = [...new Set(arr.map(r => getSupplierCode(r.Supplier)).filter(Boolean))];
+          if (arr.length >=3 && wares.size===1 && sups.length===1) suffixMap[ord] = '-MM' + arr.length;
+          else if (wares.size>1) suffixMap[ord] = '-MIX' + [...wares].join('/');
+          else if (wares.size===1 && sups.length>1) suffixMap[ord] = '-MIX' + sups.join('');
+          else suffixMap[ord] = '';
+        });
+        const toBlank = new Set();
+        Object.entries(grouped).forEach(([ord, arr]) => {
+          if (arr.length===2 && !suffixMap[ord].includes('-MIX')) toBlank.add(arr[1]._idx);
+        });
+
+        const finalRows = combinedData.map(r => {
+          if (r._blank) return r;
           const base = r._origOrder;
           const suf = suffixMap[base] || '';
-          const orderNum = toBlank.has(r._idx) ? '' : base + suf;
-          acc.push({ ...r, 'Order Number': orderNum });
-          return acc;
-        }, []);
+          return { ...r, 'Order Number': toBlank.has(r._idx) ? '' : base + suf };
+        });
 
-        // Populate mixed order numbers box
-        const mixOrders = Array.from(new Set(finalRows.map(r => r['Order Number']).filter(o => /-MIX|-MM/.test(o))));
-        document.getElementById('mixOrdersBox').value = mixOrders.join('\n');
+        // Calculate total qty
+        const qtyKey = Object.keys(finalRows.find(r => !r._blank)).find(k => k.toLowerCase() === 'qty') || 'QTY';
+        const total = finalRows.filter(r => !r._blank).reduce((sum, r) => sum + (parseFloat(r[qtyKey]) || 0), 0);
+        document.getElementById('totalQty').textContent = 'Total QTY: ' + total;
+
+        // Mixed orders
+        document.getElementById('mixOrdersBox').value = [...new Set(finalRows.map(r => r['Order Number']).filter(o => /-MIX|-MM/.test(o)))].join('\n');
 
         // Render table
         const out = document.getElementById('output'); out.innerHTML = '';
-        if (!finalRows.length) {
-          out.textContent = 'No data after processing.';
-          return;
-        }
-        const headers = Object.keys(finalRows.find(r => !r._blank)).filter(h => !['_idx','_fileIdx','_origOrder'].includes(h));
+        if (!finalRows.length) return out.textContent = 'No data after processing.';
+        const headers = Object.keys(finalRows[0]).filter(h => !['_idx','_fileIdx','_origOrder'].includes(h));
         const tbl = document.createElement('table');
         const thead = tbl.createTHead().insertRow();
         headers.forEach(h => { const th = document.createElement('th'); th.textContent = h; thead.appendChild(th); });
         const tbody = tbl.createTBody();
-        let prevFileIdx = finalRows[0]._fileIdx;
+        let prevIdx = finalRows[0]._fileIdx;
         finalRows.forEach(r => {
-          if (r._blank) {
-            const tr = tbody.insertRow();
-            const td = tr.insertCell(); td.colSpan = headers.length;
-            return;
-          }
-          if (r._fileIdx !== prevFileIdx) {
-            const tr = tbody.insertRow();
-            const td = tr.insertCell(); td.colSpan = headers.length;
-            prevFileIdx = r._fileIdx;
-          }
-          const tr = tbody.insertRow();
-          if ((grouped[r._origOrder] || []).length > 1) tr.classList.add('highlight');
+          if (r._blank) { const tr = tbody.insertRow(); const td = tr.insertCell(); td.colSpan = headers.length; return; }
+          if (r._fileIdx !== prevIdx) { const tr = tbody.insertRow(); const td = tr.insertCell(); td.colSpan = headers.length; prevIdx = r._fileIdx; }
+          const tr = tbody.insertRow(); if ((grouped[r._origOrder] || []).length > 1) tr.classList.add('highlight');
           headers.forEach(h => {
             const td = tr.insertCell();
             if (h === 'Order Number') {
-              const inp = document.createElement('input');
-              inp.type = 'text'; inp.value = r[h] || ''; inp.className = 'order-input';
-              td.appendChild(inp);
+              const inp = document.createElement('input'); inp.type = 'text'; inp.value = r[h]; inp.className = 'order-input'; td.appendChild(inp);
             } else td.textContent = r[h];
           });
         });
         out.appendChild(tbl);
 
-        // Copy button: include inputs
+        // Copy button handler
         document.getElementById('copyBtn').onclick = () => {
-          const rows = Array.from(tbl.tBodies[0].rows);
-          const text = rows.map(tr => Array.from(tr.cells).map(td => {
-            const inp = td.querySelector('input');
-            return inp ? inp.value : td.textContent;
-          }).join('\t')).join('\n');
+          const text = [...tbl.tBodies[0].rows].map(tr => 
+            [...tr.cells].map(td => {
+              const inp = td.querySelector('input');
+              return inp ? inp.value : td.textContent;
+            }).join('\t')
+          ).join('\n');
           navigator.clipboard.writeText(text).then(() => alert('Data copied to clipboard'));
         };
+
+        // Export button handler (skip blank separator rows)
+        document.getElementById('exportBtn').onclick = () => {
+          const data = [headers];
+          [...tbl.tBodies[0].rows].forEach(tr => {
+            if (tr.cells.length !== headers.length) return;
+            const row = [...tr.cells].map(td => {
+              const inp = td.querySelector('input');
+              return inp ? inp.value : td.textContent;
+            });
+            data.push(row);
+          });
+          const ws = XLSX.utils.aoa_to_sheet(data);
+          const wb2 = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb2, ws, 'Scrubbed');
+          XLSX.writeFile(wb2, 'scrubbed_output.xlsx');
+        };
       });
-    });
+    }
+
+    document.getElementById('fileInput').addEventListener('change', e => processFiles(Array.from(e.target.files)));
   </script>
 </body>
 </html>
