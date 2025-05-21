@@ -33,11 +33,13 @@
     .owner-info { display:none; padding:var(--spacing); background:#f0f4f8; }
     .owner-photo { width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid var(--primary-color); display:block; margin:0 auto; }
     .owner-name { text-align:center; margin-top:0.5rem; color:var(--primary-color); font-weight:600; }
-    .project-content { padding:var(--spacing); text-align:left; }
+    .project-content { padding:var(--spacing); text-align:left; padding-bottom:calc(var(--spacing)*2); }
     .project-content h2 { font-size:1.25rem; color:var(--primary-color); margin-bottom:0.5rem; }
     .project-content p { color:#555; margin-bottom:1rem; font-size:0.95rem; }
-    .view-tool { display:inline-block; text-decoration:none; font-weight:600; color:var(--primary-color); transition:border-color var(--transition); border-bottom:2px solid transparent; cursor:pointer; }
+    .view-tool { position:absolute; bottom:var(--spacing); left:var(--spacing); text-decoration:none; font-weight:600; color:var(--primary-color); transition:border-color var(--transition); border-bottom:2px solid transparent; cursor:pointer; }
     .view-tool:hover { border-color:var(--primary-hover); }
+    .view-tutorial { position:absolute; bottom:var(--spacing); right:var(--spacing); text-decoration:none; font-weight:600; color:var(--primary-color); transition:border-color var(--transition); border-bottom:2px solid transparent; cursor:pointer; }
+    .view-tutorial:hover { border-color:var(--primary-hover); }
     footer { background:#fff; text-align:center; padding:var(--spacing) 0; color:#777; font-size:0.875rem; border-top:1px solid #eaeaea; }
   </style>
 </head>
@@ -91,6 +93,7 @@
           <h2>Ordering File Generator</h2>
           <p>Prepares and formats files for seamless NetSuite PO imports.</p>
           <a href="#" class="view-tool" data-src="https://purchase-order-team.github.io/Processors/Depo_KSI_FileGenerator_Marcus_Kathleen.html">View Tool &rarr;</a>
+          <a href="#" class="view-tutorial" data-tutorial-src="https://your.video.url/here">View Tutorial &rarr;</a>
         </div>
       </div>
       <!-- NetSuite Importing Tool -->
@@ -106,6 +109,7 @@
           <h2>NetSuite Importing Tool</h2>
           <p>Formats and validates data files for smooth import into NetSuite.</p>
           <a href="#" class="view-tool" data-src="https://purchase-order-team.github.io/Processors/NetSuite_Importing_Tool_Marcus_Kathleen.html">View Tool &rarr;</a>
+          <a href="#" class="view-tutorial" data-tutorial-src="https://your.video.url/here">View Tutorial &rarr;</a>
         </div>
       </div>
       <!-- Order Tagging Tool -->
@@ -119,6 +123,7 @@
           <h2>Order Tagging Tool</h2>
           <p>Processes detailed order data to ensure accurate tagging and fulfillment in ShipStation.</p>
           <a href="#" class="view-tool" data-src="https://purchase-order-team.github.io/Processors/Order_Tagging_Christine.html">View Tool &rarr;</a>
+          <a href="#" class="view-tutorial" data-tutorial-src="https://netorgft5128391-my.sharepoint.com/:v:/g/personal/christineanastacio_karparts360_com/EblbULkmm2RLmX0LAT_AwqUBTWvmpnNFRdjTTo1grnl4fQ?e=Dx9DHV&nav=eyJwbGF5YmFja09wdGlvbnMiOnt9LCJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJUZWFtcyIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJwb3N0cm9sbC1jb3B5bGluayIsInJlZmVycmFsUGxheWJhY2tTZXNzaW9uSWQiOiJmNDEyYjM4ZC02YTY3LTRkZDYtOGUyZS01YjU0MzYyYWYwOGIifX0%3D">View Tutorial &rarr;</a>
         </div>
       </div>
       <!-- International Address Sweeping Tool -->
@@ -134,6 +139,7 @@
           <h2>International Address Sweeping Tool</h2>
           <p>Identifies and tracks international shipments to verify proper processing.</p>
           <a href="#" class="view-tool" data-src="https://purchase-order-team.github.io/Processors/International_Address_Sweep.html">View Tool &rarr;</a>
+          <a href="#" class="view-tutorial" data-tutorial-src="https://your.video.url/here">View Tutorial &rarr;</a>
         </div>
       </div>
       <!-- PO Scrubbing Tool -->
@@ -147,6 +153,7 @@
           <h2>PO Scrubbing Tool</h2>
           <p>Validates selected SKUs to prevent duplicates and ensure accurate fulfillment.</p>
           <a href="#" class="view-tool" data-src="https://purchase-order-team.github.io/Processors/POScrubbing_Mary.html">View Tool &rarr;</a>
+          <a href="#" class="view-tutorial" data-tutorial-src="https://your.video.url/here">View Tutorial &rarr;</a>
         </div>
       </div>
       <!-- Carrier Count Tool -->
@@ -160,6 +167,7 @@
           <h2>Carrier Count Tool</h2>
           <p>Generates daily summaries of carriers used to optimize shipping operations.</p>
           <a href="#" class="view-tool" data-src="https://purchase-order-team.github.io/Processors/carrier_count_Jerrilyn.html">View Tool &rarr;</a>
+          <a href="#" class="view-tutorial" data-tutorial-src="https://your.video.url/here">View Tutorial &rarr;</a>
         </div>
       </div>
       <!-- NPM Calculator Tool -->
@@ -175,6 +183,7 @@
           <h2>NPM Calculator</h2>
           <p>Calculates net profit margins per order and flags high shipping costs to inform pricing decisions.</p>
           <a href="#" class="view-tool" data-src="https://purchase-order-team.github.io/Processors/NPM_Calc_for_Labelling.html">View Tool &rarr;</a>
+          <a href="#" class="view-tutorial" data-tutorial-src="https://your.video.url/here">View Tutorial &rarr;</a>
         </div>
       </div>
       <!-- Amazon Logistics Count Tool -->
@@ -188,6 +197,7 @@
           <h2>Amazon Logistics Count Tool</h2>
           <p>Summarizes daily orders shipped via Amazon Logistics to streamline performance analysis.</p>
           <a href="#" class="view-tool" data-src="https://purchase-order-team.github.io/Processors/Amazon_Logistics_Count_Dari.html">View Tool &rarr;</a>
+          <a href="#" class="view-tutorial" data-tutorial-src="https://your.video.url/here">View Tutorial &rarr;</a>
         </div>
       </div>
       <!-- KSI Inventory Generator -->
@@ -201,6 +211,7 @@
           <h2>KSI Inventory Generator</h2>
           <p>This tool organizes KSI inventory files, preparing them for upload to ZM and CA.</p>
           <a href="#" class="view-tool" data-src="https://purchase-order-team.github.io/Processors/KSI_Inventory_File_Generator_CJ.html">View Tool &rarr;</a>
+          <a href="#" class="view-tutorial" data-tutorial-src="https://your.video.url/here">View Tutorial &rarr;</a>
         </div>
       </div>
       <!-- Multishipment Tool -->
@@ -214,6 +225,7 @@
           <h2>Multishipment Tool</h2>
           <p>This tool tracks multiple shipments and automatically generates customer emails detailing their shipping information.</p>
           <a href="#" class="view-tool" data-src="https://purchase-order-team.github.io/Processors/Multishipment_Tracker_Daryl.html">View Tool &rarr;</a>
+          <a href="#" class="view-tutorial" data-tutorial-src="https://your.video.url/here">View Tutorial &rarr;</a>
         </div>
       </div>
       <!-- ZS File Sorter -->
@@ -227,6 +239,7 @@
           <h2>ZS File Sorter</h2>
           <p>This tool is used to sort and fix the files to be used to upload in Beta Zenmighty or ZS.</p>
           <a href="#" class="view-tool" data-src="https://purchase-order-team.github.io/Processors/Ordersortingandupload_Chez.html">View Tool &rarr;</a>
+          <a href="#" class="view-tutorial" data-tutorial-src="https://your.video.url/here">View Tutorial &rarr;</a>
         </div>
       </div>
     </div>
@@ -234,11 +247,12 @@
   <footer>
     &copy; 2025 KarParts360 PO TEAM.
   </footer>
-  <script>
+    <script>
     document.getElementById('modal-close').addEventListener('click',()=>{document.getElementById('welcome-modal').style.display='none';});
     document.getElementById('search').addEventListener('change',function(e){const term=e.target.value.toLowerCase();document.querySelectorAll('.project-card').forEach(card=>{const title=card.getAttribute('data-title').toLowerCase();card.style.display=term===''||title.includes(term)?'block':'none';});});
     document.querySelectorAll('.owner-toggle').forEach(btn=>btn.addEventListener('click',()=>{const info=btn.nextElementSibling;info.style.display=info.style.display==='block'?'none':'block';}));
     document.querySelectorAll('.view-tool').forEach(link=>link.addEventListener('click',e=>{e.preventDefault();const src=link.getAttribute('data-src');document.getElementById('tool-frame').src=src;document.querySelector('main').style.display='none';document.getElementById('tool-viewer').style.display='flex';}));
+    document.querySelectorAll('.view-tutorial').forEach(link=>link.addEventListener('click',e=>{e.preventDefault();const src=link.getAttribute('data-tutorial-src');document.getElementById('tool-frame').src=src;document.querySelector('main').style.display='none';document.getElementById('tool-viewer').style.display='flex';}));
     document.getElementById('back-btn').addEventListener('click',()=>{document.getElementById('tool-viewer').style.display='none';document.querySelector('main').style.display='';document.getElementById('tool-frame').src='';});
   </script>
 </body>
