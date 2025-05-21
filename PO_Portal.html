@@ -20,7 +20,8 @@
     .header-content p { color:#555; margin-top:0.5rem; }
     #tool-viewer { display:none; flex:1; flex-direction:column; }
 	.video-wrapper {position: relative; width: 100%; height: 80vh; overflow: hidden;}
-	.video-wrapper iframe { position: absolute; top: 0; left: 50%; transform: translateX(-50%); height: 100%; width:  calc(80vh * (16/9)); border: none;}
+	.video-wrapper.tool iframe {position: absolute; top: 0; left: 0; width: 100%; height: 100%;}
+	.video-wrapper.tutorial iframe {position: absolute; top: 0; left: 50%; transform: translateX(-50%); height: 100%; width: calc(80vh * (16/9));}
     #back-btn { background:var(--primary-color); color:#fff; border:none; padding:0.5rem 1rem; margin:var(--spacing); border-radius:var(--radius); cursor:pointer; align-self:start; }
     main { flex:1; max-width:1200px; margin:var(--spacing) auto; padding:0 var(--spacing); }
     .search-container { margin-bottom:var(--spacing); text-align:center; }
@@ -254,8 +255,9 @@
     document.getElementById('modal-close').addEventListener('click',()=>{document.getElementById('welcome-modal').style.display='none';});
     document.getElementById('search').addEventListener('change',function(e){const term=e.target.value.toLowerCase();document.querySelectorAll('.project-card').forEach(card=>{const title=card.getAttribute('data-title').toLowerCase();card.style.display=term===''||title.includes(term)?'block':'none';});});
     document.querySelectorAll('.owner-toggle').forEach(btn=>btn.addEventListener('click',()=>{const info=btn.nextElementSibling;info.style.display=info.style.display==='block'?'none':'block';}));
-    document.querySelectorAll('.view-tool').forEach(link=>link.addEventListener('click',e=>{e.preventDefault();const src=link.getAttribute('data-src');document.getElementById('tool-frame').src=src;document.querySelector('main').style.display='none';document.getElementById('tool-viewer').style.display='flex';}));
-    document.querySelectorAll('.view-tutorial').forEach(link=>link.addEventListener('click',e=>{e.preventDefault();const src=link.getAttribute('data-tutorial-src');document.getElementById('tool-frame').src=src;document.querySelector('main').style.display='none';document.getElementById('tool-viewer').style.display='flex';}));
+const wrapper = document.querySelector('.video-wrapper');
+    document.querySelectorAll('.view-tool').forEach(link =>link.addEventListener('click', e => {e.preventDefault();const src = link.dataset.src;document.getElementById('tool-frame').src = src;wrapper.classList.remove('tutorial');wrapper.classList.add('tool');document.querySelector('main').style.display = 'none';document.getElementById('tool-viewer').style.display = 'flex';}));
+    document.querySelectorAll('.view-tutorial').forEach(link =>link.addEventListener('click', e => {e.preventDefault();const src = link.dataset.tutorialSrc;document.getElementById('tool-frame').src = src;wrapper.classList.remove('tool');wrapper.classList.add('tutorial');document.querySelector('main').style.display = 'none';document.getElementById('tool-viewer').style.display = 'flex';}));
     document.getElementById('back-btn').addEventListener('click',()=>{document.getElementById('tool-viewer').style.display='none';document.querySelector('main').style.display='';document.getElementById('tool-frame').src='';});
   </script>
 </body>
