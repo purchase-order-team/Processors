@@ -160,15 +160,17 @@ function generateSummaryTable(data) {
 
   let html = `<table><tr><th>Region</th>`;
   knownCarriers.forEach(c => html += `<th>${c}</th>`);
-  html += `</tr>`;
+  html += `<th>Total</th></tr>`;
 
   Object.entries(regionMap).forEach(([region, carriers]) => {
+    let total = 0;
     html += `<tr><td>${region}</td>`;
     knownCarriers.forEach(carrier => {
       const count = carriers[carrier] || 0;
+      total += count;
       html += `<td>${count}</td>`;
     });
-    html += `</tr>`;
+    html += `<td><strong>${total}</strong></td></tr>`;
   });
 
   html += `</table>`;
