@@ -5,16 +5,98 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Copy Paste Table</title>
   <style>
-    table, th, td {
-      border: 1px solid black;
-      border-collapse: collapse;
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f7fb;
+      margin: 30px;
+      color: #333;
     }
-    th, td {
-      padding: 8px;
+
+    h2 {
+      color: #2b3a55;
+      border-bottom: 2px solid #d0d8e8;
+      padding-bottom: 6px;
     }
+
     textarea {
       width: 100%;
       height: 100px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 10px;
+      font-family: monospace;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      margin-bottom: 10px;
+    }
+
+    button {
+      background-color: #2b6cb0;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+
+    button:hover {
+      background-color: #2c5282;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      background-color: white;
+    }
+
+    thead {
+      background-color: #2b6cb0;
+      color: white;
+    }
+
+    th, td {
+      border: 1px solid #d4d4d4;
+      padding: 10px;
+      text-align: left;
+    }
+
+    td[contenteditable="true"] {
+      background-color: #f0f4fa;
+    }
+
+    tbody tr:nth-child(even) {
+      background-color: #f9fbfc;
+    }
+
+    tbody tr:nth-child(odd) {
+      background-color: #ffffff;
+    }
+
+    #summary {
+      margin-top: 20px;
+      font-size: 16px;
+    }
+
+    #summary span {
+      display: inline-block;
+      margin-right: 20px;
+      font-weight: bold;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background-color: #e2ecf7;
+      color: #1a365d;
+    }
+
+    #summary span#totalQty {
+      background-color: #d1f0e1;
+      color: #22543d;
+    }
+
+    #summary span#amazonOrders {
+      background-color: #fde68a;
+      color: #92400e;
     }
   </style>
 </head>
@@ -26,6 +108,7 @@
 
   <h2>Processed Data (4 Columns)</h2>
   <button onclick="copyTableData()">Copy Processed Data</button>
+
   <table id="resultTable">
     <thead>
       <tr>
@@ -37,8 +120,11 @@
     </thead>
     <tbody></tbody>
   </table>
-  <p><strong>Total Qty:</strong> <span id="totalQty">0</span></p>
-  <p><strong>Total Amazon Shipping Orders:</strong> <span id="amazonOrders">0</span></p>
+
+  <div id="summary">
+    <span>Total Qty: <span id="totalQty">0</span></span>
+    <span>Total Amazon Shipping Orders: <span id="amazonOrders">0</span></span>
+  </div>
 
   <script>
     function detectColumns(headerRow) {
@@ -58,17 +144,16 @@
       const amazonOrdersEl = document.getElementById("amazonOrders");
       tableBody.innerHTML = "";
       let totalQty = 0;
-      const seenAmazonOrders = new Set();
       const amazonOrderMap = new Set();
-      const skuTracker = {};
-      const omittedOrders = new Set();
+      const dataMap = {};
+      const omittedSet = new Set();
 
       if (rows.length === 0) return;
 
       const headerCells = rows[0].split(/\t|,|\s{2,}/).map(cell => cell.trim());
       const { orderIndex, skuIndex, qtyIndex } = detectColumns(headerCells);
       const keywordsToOmit = [
-        "oos", "cancel", "buyer cancelled", "cancelled", "expensive",
+        "oos", "invalid", "cancel", "buyer cancelled", "cancelled", "expensive",
         "buyer", "moved", "move", "mix", "buyer canceled", "buyercanceled", "MIX"
       ];
 
@@ -77,14 +162,12 @@
       for (let i = 1; i < rows.length; i++) {
         const cells = rows[i].split(/\t|,|\s{2,}/).map(cell => cell.trim());
         const rowText = cells.join(" ").toLowerCase();
-
         if (cells.length <= Math.max(orderIndex, skuIndex, qtyIndex)) continue;
 
         let orderNum = cells[orderIndex] || "";
         const sku = cells[skuIndex] || "";
         const qty = parseFloat(cells[qtyIndex]) || 0;
         const isAmazon = rowText.includes("amazon");
-        const shouldOmit = keywordsToOmit.some(keyword => rowText.includes(keyword.toLowerCase()));
 
         if (orderNum !== "") {
           lastOrderNum = orderNum;
@@ -92,40 +175,53 @@
           orderNum = lastOrderNum;
         }
 
+        const key = `${orderNum}||${sku}`;
+        const shouldOmit = keywordsToOmit.some(keyword => rowText.includes(keyword.toLowerCase()));
         if (shouldOmit) {
-          if (!skuTracker[orderNum]) skuTracker[orderNum] = new Set();
-          skuTracker[orderNum].add(sku);
-          omittedOrders.add(`${orderNum}||${sku}`);
+          omittedSet.add(key);
           continue;
         }
+        if (omittedSet.has(key)) continue;
 
-        if (!skuTracker[orderNum]) skuTracker[orderNum] = new Set();
-        const isDuplicate = skuTracker[orderNum].has(sku);
-        skuTracker[orderNum].add(sku);
-
-        if (omittedOrders.has(`${orderNum}||${sku}`)) continue;
-
-        if (isAmazon) {
-          amazonOrderMap.add(orderNum);
+        if (!dataMap[key]) {
+          dataMap[key] = {
+            orderNum,
+            sku,
+            qty: 0,
+            isAmazon,
+            count: 0
+          };
         }
+        dataMap[key].qty += qty;
+        dataMap[key].count++;
+        if (isAmazon) amazonOrderMap.add(orderNum);
+        totalQty += qty;
+      }
 
+      const amazonOrderNums = new Set(amazonOrderMap);
+
+      Object.values(dataMap).forEach(({ orderNum, sku, qty, count }) => {
         const tr = document.createElement("tr");
+
         [orderNum, sku, qty.toString()].forEach(val => {
           const td = document.createElement("td");
+          td.contentEditable = "true";
           td.textContent = val;
           tr.appendChild(td);
         });
 
         const tdNotes = document.createElement("td");
+        tdNotes.contentEditable = "true";
+
         let note = "";
-        if (amazonOrderMap.has(orderNum)) note = "Amazon Shipping";
-        if (isDuplicate) note += (note ? ", " : "") + "Duplicate SKU";
+        if (amazonOrderNums.has(orderNum)) note = "Amazon Shipping";
+        if (count > 1) note += (note ? ", " : "") + "Duplicate SKU";
+
         tdNotes.textContent = note;
         tr.appendChild(tdNotes);
 
         tableBody.appendChild(tr);
-        totalQty += qty;
-      }
+      });
 
       totalQtyEl.textContent = totalQty;
       amazonOrdersEl.textContent = amazonOrderMap.size;
