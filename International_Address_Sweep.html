@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>International Address</title>
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Include PapaParse for easy CSV parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      font-size: 18px;
+      background-color: #e0e0e0;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+    .card {
+      background: white;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 1rem;
+      width: 100%;
+      max-width: none;
+    }
+    h1 {
+      margin: 0 0 1rem;
+      font-size: 2.5rem;
+      color: #333;
+    }
+    .controls {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    input[type=file] {
+      display: none;
+    }
+    .btn {
+      padding: 1rem 2rem;
+      background: #0066cc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .btn:hover {
+      background: #005bb5;
+    }
+    .filename {
+      font-size: 1rem;
+      color: #555;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      overflow-x: auto;
+      font-size: 1rem;
+    }
+    th, td {
+      padding: 0.5rem 1rem;
+      text-align: left;
+      white-space: nowrap;
+    }
+    thead {
+      background: #0066cc;
+      color: white;
+    }
+    tbody tr:nth-child(even) {
+      background: #f9fafb;
+    }
+    tbody tr:hover {
+      background: #eef2ff;
+    }
+    p.no-data {
+      text-align: center;
+      color: #777;
+      margin-top: 1rem;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>International Address</h1>
+    <div class="controls">
+      <label for="fileInput" class="btn">Choose CSV</label>
+      <input type="file" id="fileInput" accept=".csv" />
+      <span id="fileNameDisplay" class="filename">No file selected</span>
+      <button id="processBtn" class="btn">Process File</button>
+      <a id="downloadLink" class="btn" download="filtered.csv" style="display:none;">Download Filtered CSV</a>
+    </div>
+    <div id="tableContainer"></div>
+  </div>
+
+  <script>
+    const fieldsToKeep = [
+      'Order - Number',
+      'Item - SKU',
+      'Ship To - City',
+      'Ship To - Address 1',
+      'Ship To - State'
+    ];
+    const usStates = [
+      'AL','AZ','AR','CA','CO','CT','DE','FL','GA',
+      'ID','IL','IN','IA','KS','KY','LA','ME','MD',
+      'MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
+      'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC',
+      'SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC'
+    ];
+    const poRegex = /\bP\.?\s*O\.?\s*BOX\b/i;
+
+    const fileInput = document.getElementById('fileInput');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
+    fileInput.addEventListener('change', () => {
+      const name = fileInput.files.length ? fileInput.files[0].name : 'No file selected';
+      fileNameDisplay.textContent = name;
+    });
+
+    document.getElementById('processBtn').addEventListener('click', () => {
+      if (!fileInput.files.length) {
+        alert('Please select a CSV file.');
+        return;
+      }
+      Papa.parse(fileInput.files[0], {
+        header: true,
+        skipEmptyLines: true,
+        complete: ({ data }) => {
+          const filtered = data
+            .map(row => fieldsToKeep.reduce((acc, f) => (acc[f] = row[f]||'', acc), {}))
+            .filter(r => {
+              const state = (r['Ship To - State']||'').trim().toUpperCase();
+              const addr = r['Ship To - Address 1']||'';
+              return !usStates.includes(state) || poRegex.test(addr);
+            });
+          renderTable(filtered);
+          prepareDownload(filtered);
+        }
+      });
+    });
+
+    function renderTable(data) {
+      const c = document.getElementById('tableContainer');
+      c.innerHTML = '';
+      if (!data.length) {
+        c.innerHTML = '<p class="no-data">No matching data found.</p>';
+        return;
+      }
+      const tbl = document.createElement('table');
+      const thead = document.createElement('thead');
+      const tr = document.createElement('tr');
+      fieldsToKeep.forEach(f => { const th = document.createElement('th'); th.textContent = f; tr.appendChild(th); });
+      thead.appendChild(tr);
+      tbl.appendChild(thead);
+      const tbody = document.createElement('tbody');
+      data.forEach(r => {
+        const row = document.createElement('tr');
+        fieldsToKeep.forEach(f => {
+          const td = document.createElement('td'); td.textContent = r[f]; row.appendChild(td);
+        });
+        tbody.appendChild(row);
+      });
+      tbl.appendChild(tbody);
+      c.appendChild(tbl);
+    }
+
+    function prepareDownload(data) {
+      const csv = Papa.unparse(data, { columns: fieldsToKeep });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const link = document.getElementById('downloadLink');
+      link.href = url;
+      link.style.display = 'inline-block';
+    }
+  </script>
+</body>
+</html>
